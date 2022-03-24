@@ -15,6 +15,7 @@ default = []
 stream = []
 codec = ["encoding_rs"]
 async = ["tokio"]
+util = []
 
 [dependencies]
 encoding_rs = {version = "0.8",optional = true}
