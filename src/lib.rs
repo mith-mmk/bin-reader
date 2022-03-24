@@ -1,4 +1,4 @@
-//! Crate bin_rs is a Binary Read Crate.
+//! Crate bin_rs is a binary manipulate crate.
 
 pub mod reader;
 #[cfg(feature="async")]
@@ -24,6 +24,7 @@ mod tests {
     use crate::Endian;
     use std::error::Error;
     #[test]
+
     fn check_works() -> Result<(),std::io::Error> {
         let buffer : Vec<u8> = (0..255).map(|i| i).collect();
         let mut reader = BytesReader::from_vec(buffer);

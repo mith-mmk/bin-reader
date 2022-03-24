@@ -9,6 +9,7 @@ use crate::Endian;
 /// using AsyncBytesReader feature async only
 /// 
 /// AsyncBytesReader is async functions bytesreader on stream
+#[derive(Copy,Debug,Clone)]
 pub struct AsyncBytesReader<R> {
     reader: R,
     endian: Endian,

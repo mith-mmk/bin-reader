@@ -25,6 +25,7 @@ pub enum CodeType {
     Utf8,
 }
 
+
 pub trait BinaryReader {
     fn set_endian(&mut self, endian: Endian);
     fn endian(&self) -> Endian;
@@ -35,6 +36,9 @@ pub trait BinaryReader {
     fn read_bytes_as_vec(&mut self,len: usize) -> Result<Vec<u8>,Error>;
 
     /// read_bytes_no_move does not move offset after read_bytes.
+    /// 
+    /// Assumed to be used for header checks.
+    /// 
     /// ```
     /// use bin_rs::reader::*;
     /// use std::io::Error;
@@ -121,6 +125,7 @@ pub trait BinaryReader {
 
 /// BytesReader from creating Slice &\[u8\] or Vec<u8>,
 /// no use Read trait
+#[derive(Debug,Clone)]
 pub struct BytesReader {
     buffer: Vec<u8>,
     ptr: usize,
@@ -132,6 +137,7 @@ pub struct BytesReader {
 ///
 /// StreamReader from creating BufRead
 /// use BufRead trait
+#[derive(Copy,Debug,Clone)]
 pub struct StreamReader<R> {
     reader: R,
     endian: Endian,
@@ -180,6 +186,7 @@ impl BinaryReader for BytesReader {
         self.ptr += 1;
         Ok(*b)
     }
+
     fn read_u8(&mut self) -> Result<u8,Error>{
         self.read_byte()
     }
@@ -198,6 +205,7 @@ impl BinaryReader for BytesReader {
         Ok(c)
     }
 
+    // This function read bytes, but it does not move pointer.
     fn read_bytes_no_move(&mut self, len: usize) -> Result<Vec<u8>, Error> {
         self.check_bound(len)?;
         let mut c:Vec<u8> = Vec::new();
@@ -644,6 +652,8 @@ impl<R:BufRead> BinaryReader for StreamReader<R> {
         Ok(array)
     }
 
+    // This function read bytes and does not move pointer.
+    // However it's behavior dependences read buffer size.
     fn read_bytes_no_move(&mut self,len: usize) -> Result<Vec<u8>,Error> {
         let buffer = self.reader.fill_buf()?;
         if buffer.len() <= len {
