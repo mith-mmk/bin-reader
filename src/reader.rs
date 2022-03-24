@@ -1,3 +1,6 @@
+//! A reader default uses system endianness
+//! If you will use another endianness,use set_endian.
+
 use std::io::Error;
 use std::io::ErrorKind;
 use crate::Endian;
@@ -23,24 +26,29 @@ pub enum CodeType {
 }
 
 pub trait BinaryReader {
+    fn set_endian(&mut self, endian: Endian);
+    fn endian(&self) -> Endian;
+    
     fn read_byte(&mut self) -> Result<u8,Error>;
     fn read_u8(&mut self) -> Result<u8,Error>;
 //    fn read_bytes(&mut self,len: usize) -> Result<&[u8],Error>;
     fn read_bytes_as_vec(&mut self,len: usize) -> Result<Vec<u8>,Error>;
 
     /// read_bytes_no_move does not move offset after read_bytes.
-    ///
-    /// Ex)
-    /// 
     /// ```
-    /// let buffer = b"Hello World!";
-    /// let mut reader = BytesReader::new(buffer);
-    /// let buffer1 = reader.read_bytes_no_move(4)?;
-    /// assert_eq!(buffer1,b"Hell");
-    /// let buffer1 = reader.read_bytes_as_vec(4)?;
-    /// assert_eq!(buffer1,b"Hell");
-    /// let buffer1 = reader.read_bytes_as_vec(4)?;
-    /// assert_eq!(buffer1,b"o Wor");
+    /// use bin_rs::reader::*;
+    /// use std::io::Error;
+    /// fn test() ->  Result<(),Error> {
+    ///    let buffer = b"Hello World!";
+    ///    let mut reader = BytesReader::new(buffer);
+    ///    let buffer1 = reader.read_bytes_no_move(4)?;
+    /// // assert_eq!(buffer1,b"Hell");
+    ///    let buffer1 = reader.read_bytes_as_vec(4)?;
+    /// // assert_eq!(buffer1,b"Hell");
+    ///    let buffer1 = reader.read_bytes_as_vec(4)?;
+    /// // assert_eq!(buffer1,b"o Wo");
+    ///    return Ok(())
+    /// }
     /// ```
     /// 
     fn read_bytes_no_move(&mut self,len: usize) -> Result<Vec<u8>,Error>;
@@ -88,10 +96,16 @@ pub trait BinaryReader {
     /// Ex)
     /// 
     /// ```
-    /// let buffer = b"Hello World!\01234";
-    /// let mut reader = BytesReader::new(buffer);
-    /// let r = reader.read_ascii_string("Hello World!\01234".len())?;  // after \0 is trim
-    /// assert_eq!(r ,"Hello World!");
+    /// use bin_reader::reader::*;
+    /// use std::io::Error;
+    /// 
+    /// fn test() -> Result<String,Error> {
+    ///   let buffer = b"Hello World!\01234";
+    ///   let mut reader = BytesReader::new(buffer);
+    ///   let r = reader.read_ascii_string("Hello World!\01234".len())?;  // after \0 is trim
+    ///   //assert_eq!(r ,"Hello World!");
+    ///   return Ok(r)
+    /// }
     /// ```
     /// 
     fn read_ascii_string(&mut self,size:usize) -> Result<String,Error>;
@@ -105,6 +119,8 @@ pub trait BinaryReader {
     fn skip_ptr(&mut self,size:usize) -> Result<usize,Error>; 
 }
 
+/// BytesReader from creating Slice &\[u8\] or Vec<u8>,
+/// no use Read trait
 pub struct BytesReader {
     buffer: Vec<u8>,
     ptr: usize,
@@ -112,25 +128,21 @@ pub struct BytesReader {
 }
 
 #[cfg(feature="stream")]
+/// using StreamReader feature stream only
+///
+/// StreamReader from creating BufRead
+/// use BufRead trait
 pub struct StreamReader<R> {
     reader: R,
     endian: Endian,
 }
 
 impl BytesReader {
-    fn system_endian() -> Endian {
-        if cfg!(tarread_endian = "big") {
-            Endian::BigEndian
-        } else {
-            Endian::LittleEndtian
-        }
-    }
-
     pub fn new(buffer:&[u8]) -> Self {
         Self{
             buffer:buffer.to_vec(),
             ptr: 0,
-            endian: Self::system_endian(),
+            endian: crate::system_endian(),
         } 
     }
 
@@ -138,17 +150,9 @@ impl BytesReader {
         Self{
             buffer: buffer,
             ptr: 0,
-            endian: Self::system_endian(),
+            endian: crate::system_endian(),
         } 
 
-    }
-
-    pub fn set_endian(&mut self, endian: Endian) {
-        self.endian = endian;
-    }
-
-    pub fn endian(&self) -> Endian {
-        self.endian
     }
 
     fn check_bound(&mut self,size:usize) -> Result<(),Error> {
@@ -162,6 +166,14 @@ impl BytesReader {
 }
 
 impl BinaryReader for BytesReader {
+    fn set_endian(&mut self, endian: Endian) {
+        self.endian = endian;
+    }
+
+    fn endian(&self) -> Endian {
+        self.endian
+    }
+
     fn read_byte(&mut self) -> Result<u8,Error>{
         self.check_bound(1)?;
         let b = &self.buffer[self.ptr];
@@ -187,8 +199,7 @@ impl BinaryReader for BytesReader {
     }
 
     fn read_bytes_no_move(&mut self, len: usize) -> Result<Vec<u8>, Error> {
-        let len = if self.buffer.len() <= self.ptr + len 
-                { self.buffer.len() - self.ptr } else {len};
+        self.check_bound(len)?;
         let mut c:Vec<u8> = Vec::new();
         for i in 0..len {
             c.push(self.buffer[self.ptr + i]);
@@ -554,6 +565,7 @@ impl BinaryReader for BytesReader {
         }
     }
 
+    /// read end of size,not skip 0x00 marker
     fn read_utf8_string(&mut self,size:usize) -> Result<String,Error>{
         self.check_bound(size)?;
         let ptr = self.ptr;
@@ -582,7 +594,7 @@ impl BinaryReader for BytesReader {
         Err(Error::new(ErrorKind::Other,"No impl"));
     }
 
-    /// skip size byte
+    /// skip_ptr skips offset size bytes
     fn skip_ptr(&mut self,size:usize) -> Result<usize,Error>{
         self.check_bound(size)?;
         self.ptr += size;
@@ -593,34 +605,26 @@ impl BinaryReader for BytesReader {
 
 #[cfg(feature="stream")]
 impl<R:BufRead> StreamReader<R> {
-    fn system_endian() -> Endian {
-        if cfg!(tarread_endian = "big") {
-            Endian::BigEndian
-        } else {
-            Endian::LittleEndtian
-        }
-    }
+
 
     pub fn new(reader: R) -> StreamReader<R> {
         StreamReader {
             reader: reader,
-            endian: Self::system_endian(),
+            endian: crate::system_endian(),
         }
     }
-
-    
-    pub fn set_endian(&mut self, endian: Endian) {
-        self.endian = endian;
-    }
-
-    pub fn endian(&self) -> Endian {
-        self.endian
-    }
-    
 }
 
 #[cfg(feature="stream")]
 impl<R:BufRead> BinaryReader for StreamReader<R> {
+    fn set_endian(&mut self, endian: Endian) {
+        self.endian = endian;
+    }
+
+    fn endian(&self) -> Endian {
+        self.endian
+    }
+
     fn read_byte(&mut self) -> Result<u8,Error>{
         let mut buffer = [0; 1];
         self.reader.read_exact(&mut buffer)?;
