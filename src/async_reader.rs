@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use std::io::prelude::BufRead;
 use tokio::io::AsyncRead;
 use tokio::io::Error;
 use tokio::io::ErrorKind;
@@ -10,6 +11,7 @@ pub trait AsyncBinaryReader {
     async fn read_u8(&mut self) -> Result<u8,Error>;
 //    async fn read_bytes(&mut self,len: usize) -> Result<&[u8],Error>;
     async fn read_bytes_as_vec(&mut self,len: usize) -> Result<Vec<u8>,Error>;
+    async fn read_bytes_no_move(&mut self,len: usize) -> Result<Vec<u8>,Error>;
 
     async fn read_u16(&mut self) -> Result<u16,Error>;
     async fn read_u32(&mut self) -> Result<u32,Error>;
@@ -93,7 +95,7 @@ impl<R:AsyncRead>  AsyncByteReader<R> {
 }
 
 #[async_trait]
-impl<R: std::io::Read + AsyncRead + std::marker::Send> AsyncBinaryReader for AsyncByteReader<R> {
+impl<R: BufRead + AsyncRead + Send> AsyncBinaryReader for AsyncByteReader<R> {
     
     async fn read_byte(&mut self) -> Result<u8,Error>{
         let mut buffer = [0; 1];
@@ -112,6 +114,16 @@ impl<R: std::io::Read + AsyncRead + std::marker::Send> AsyncBinaryReader for Asy
     async fn read_bytes_as_vec(&mut self,len: usize) -> Result<Vec<u8>,Error>{
         let mut array: Vec<u8> = (0..len).map(|_| 0).collect();
         self.reader.read_exact(&mut array)?;
+        Ok(array)
+    }
+
+    async fn read_bytes_no_move(&mut self,len: usize) -> Result<Vec<u8>,Error>{
+        let buffer = self.reader.fill_buf()?;
+        if buffer.len() <= len {
+            let err = "Data shotage";
+            return Err(Error::new(ErrorKind::Other,err));
+        }
+        let array: Vec<u8> = (0..len).map(|i| buffer[i]).collect();
         Ok(array)
     }
 
@@ -378,7 +390,6 @@ impl<R: std::io::Read + AsyncRead + std::marker::Send> AsyncBinaryReader for Asy
         let buf = &array;
         let mut s = Vec::new();
         for i in 0..size {
-            if buf[i] == 0 {break;}
             s.push(buf[i]);
         }
         let res = String::from_utf8(s);

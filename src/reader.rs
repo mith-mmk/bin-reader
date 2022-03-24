@@ -32,16 +32,16 @@ pub trait BinaryReader {
     ///
     /// Ex)
     /// 
-    /// '''
+    /// ```
     /// let buffer = b"Hello World!";
-    /// let mut reader = SliceReader::new(buffer);
+    /// let mut reader = BytesReader::new(buffer);
     /// let buffer1 = reader.read_bytes_no_move(4)?;
     /// assert_eq!(buffer1,b"Hell");
     /// let buffer1 = reader.read_bytes_as_vec(4)?;
     /// assert_eq!(buffer1,b"Hell");
     /// let buffer1 = reader.read_bytes_as_vec(4)?;
     /// assert_eq!(buffer1,b"o Wor");
-    /// '''
+    /// ```
     /// 
     fn read_bytes_no_move(&mut self,len: usize) -> Result<Vec<u8>,Error>;
 
@@ -87,12 +87,12 @@ pub trait BinaryReader {
     /// 
     /// Ex)
     /// 
-    /// '''
+    /// ```
     /// let buffer = b"Hello World!\01234";
-    /// let mut reader = SliceReader::new(buffer);
+    /// let mut reader = BytesReader::new(buffer);
     /// let r = reader.read_ascii_string("Hello World!\01234".len())?;  // after \0 is trim
     /// assert_eq!(r ,"Hello World!");
-    /// '''
+    /// ```
     /// 
     fn read_ascii_string(&mut self,size:usize) -> Result<String,Error>;
 
@@ -105,19 +105,19 @@ pub trait BinaryReader {
     fn skip_ptr(&mut self,size:usize) -> Result<usize,Error>; 
 }
 
-pub struct SliceReader {
+pub struct BytesReader {
     buffer: Vec<u8>,
     ptr: usize,
     endian: Endian,
 }
 
 #[cfg(feature="stream")]
-pub struct ByteReader<R> {
+pub struct StreamReader<R> {
     reader: R,
     endian: Endian,
 }
 
-impl SliceReader {
+impl BytesReader {
     fn system_endian() -> Endian {
         if cfg!(tarread_endian = "big") {
             Endian::BigEndian
@@ -161,7 +161,7 @@ impl SliceReader {
     }
 }
 
-impl BinaryReader for SliceReader {
+impl BinaryReader for BytesReader {
     fn read_byte(&mut self) -> Result<u8,Error>{
         self.check_bound(1)?;
         let b = &self.buffer[self.ptr];
@@ -592,7 +592,7 @@ impl BinaryReader for SliceReader {
 
 
 #[cfg(feature="stream")]
-impl<R:BufRead> ByteReader<R> {
+impl<R:BufRead> StreamReader<R> {
     fn system_endian() -> Endian {
         if cfg!(tarread_endian = "big") {
             Endian::BigEndian
@@ -601,8 +601,8 @@ impl<R:BufRead> ByteReader<R> {
         }
     }
 
-    pub fn new(reader: R) -> ByteReader<R> {
-        ByteReader {
+    pub fn new(reader: R) -> StreamReader<R> {
+        StreamReader {
             reader: reader,
             endian: Self::system_endian(),
         }
@@ -620,7 +620,7 @@ impl<R:BufRead> ByteReader<R> {
 }
 
 #[cfg(feature="stream")]
-impl<R:BufRead> BinaryReader for ByteReader<R> {
+impl<R:BufRead> BinaryReader for StreamReader<R> {
     fn read_byte(&mut self) -> Result<u8,Error>{
         let mut buffer = [0; 1];
         self.reader.read_exact(&mut buffer)?;
