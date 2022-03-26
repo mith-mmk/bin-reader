@@ -10,6 +10,16 @@ mod tests {
         let buffer : Vec<u8> = (0..255).map(|i| i).collect();
         let mut reader = BytesReader::from_vec(buffer);
 
+        let endian =
+            if cfg!(tarread_endian = "big") {
+                Endian::BigEndian
+            } else {
+                Endian::LittleEndian
+        };
+        
+        assert_eq!(endian, reader.endian()?);
+    
+
         let r = reader.read_byte()?;
         assert_eq!(r , 0_u8);
         let r = reader.read_u8()?;
@@ -31,6 +41,9 @@ mod tests {
         assert_eq!(r , 0x202122232425262728292a2b2c2d2e2f);
         let r = reader.read_u128_le()?;
         assert_eq!(r , 0x3f3e3d3c3b3a39383736353433323130);
+        let r = reader.offset()?;
+
+        assert_eq!(r , 0x40);
 
         let buffer : Vec<u8> = (0..32).map(|i| 255-i).collect();
         let mut reader = BytesReader::from_vec(buffer);
@@ -147,6 +160,9 @@ mod tests {
         assert_eq!(r , 0x202122232425262728292a2b2c2d2e2f);
         let r = reader.read_u128_le()?;
         assert_eq!(r , 0x3f3e3d3c3b3a39383736353433323130);
+        let r = reader.offset()?;
+        assert_eq!(r , 0x40);
+
     
         let buffer : Vec<u8> = (0..32).map(|i| 255-i).collect();
         let mut reader = StreamReader::new(&*buffer);

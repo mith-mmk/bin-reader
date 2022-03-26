@@ -41,22 +41,7 @@ pub trait BinaryReader {
     /// 
     /// Assumed to be used for header checks.
     /// 
-    /// ```
-    /// use bin_rs::reader::*;
-    /// use std::io::Error;
-    /// fn test() ->  Result<(),Error> {
-    ///    let buffer = b"Hello World!";
-    ///    let mut reader = BytesReader::new(buffer);
-    ///    let buffer1 = reader.read_bytes_no_move(4)?;
-    /// // assert_eq!(buffer1,b"Hell");
-    ///    let buffer1 = reader.read_bytes_as_vec(4)?;
-    /// // assert_eq!(buffer1,b"Hell");
-    ///    let buffer1 = reader.read_bytes_as_vec(4)?;
-    /// // assert_eq!(buffer1,b"o Wo");
-    ///    return Ok(())
-    /// }
-    /// ```
-    /// 
+
     fn read_bytes_no_move(&mut self,len: usize) -> Result<Vec<u8>,Error>;
 
     fn read_u16(&mut self) -> Result<u16,Error>;
@@ -98,22 +83,7 @@ pub trait BinaryReader {
 
     /// read_ascii_string for C like ascii string.This function finishes find end marker 0x00.
     /// If reader read until \0, but skip size byte.
-    /// 
-    /// Ex)
-    /// 
-    /// ```
-    /// use bin_reader::reader::*;
-    /// use std::io::Error;
-    /// 
-    /// fn test() -> Result<String,Error> {
-    ///   let buffer = b"Hello World!\01234";
-    ///   let mut reader = BytesReader::new(buffer);
-    ///   let r = reader.read_ascii_string("Hello World!\01234".len())?;  // after \0 is trim
-    ///   //assert_eq!(r ,"Hello World!");
-    ///   return Ok(r)
-    /// }
-    /// ```
-    /// 
+
     fn read_ascii_string(&mut self,size:usize) -> Result<String,Error>;
 
     fn read_utf8_string(&mut self,size:usize) -> Result<String,Error>;
@@ -123,9 +93,7 @@ pub trait BinaryReader {
 
     /// skip size byte
     fn skip_ptr(&mut self,size:usize) -> Result<usize,Error>;
-}
 
-pub trait BinaryReaderSeek {
     fn offset(&mut self) -> Result<u64,Error>;
 }
 
@@ -223,14 +191,9 @@ impl Seek for BytesReader {
     }
 }
 
-impl BinaryReaderSeek for BytesReader {
-    fn offset(&mut self) -> Result<u64,Error> {
-        Ok(self.ptr as u64)
-    }
-}
 
 #[cfg(feature="stream")]
-impl<R:BufRead> StreamReader<R> {
+impl<R:BufRead + Seek> StreamReader<R> {
     pub fn new(reader: R) -> StreamReader<R> {
         StreamReader {
             reader: reader,
@@ -240,13 +203,11 @@ impl<R:BufRead> StreamReader<R> {
 }
 
 #[cfg(feature="stream")]
-impl<R:BufRead + Seek> BinaryReaderSeek for StreamReader<R> {
-    fn offset(&mut self) -> Result<u64,Error> {
-        return self.reader.seek(SeekFrom::Current(0))
-    }
-}
-
 impl BinaryReader for BytesReader {
+    fn offset(&mut self) -> Result<u64,Error> {
+        return self.seek(SeekFrom::Current(0))
+    }
+
     fn set_endian(&mut self, endian: Endian) {
         self.endian = endian;
     }
@@ -281,6 +242,22 @@ impl BinaryReader for BytesReader {
     }
 
     // This function read bytes, but it does not move pointer.
+    /// ```
+    /// use bin_rs::reader::*;
+    /// use std::io::Error;
+    /// fn test() ->  Result<(),Error> {
+    ///    let buffer = b"Hello World!";
+    ///    let mut reader = BytesReader::new(buffer);
+    ///    let buffer1 = reader.read_bytes_no_move(4)?;
+    /// // assert_eq!(buffer1,b"Hell");
+    ///    let buffer1 = reader.read_bytes_as_vec(4)?;
+    /// // assert_eq!(buffer1,b"Hell");
+    ///    let buffer1 = reader.read_bytes_as_vec(4)?;
+    /// // assert_eq!(buffer1,b"o Wo");
+    ///    return Ok(())
+    /// }
+    /// ```
+    /// 
     fn read_bytes_no_move(&mut self, len: usize) -> Result<Vec<u8>, Error> {
         self.check_bound(len)?;
         let mut c:Vec<u8> = Vec::new();
@@ -626,6 +603,19 @@ impl BinaryReader for BytesReader {
     }
 
     /// read until \0, but skip size byte
+    /// ```
+    /// use bin_rs::reader::*;
+    /// use std::io::Error;
+    /// 
+    /// fn test() -> Result<String,Error> {
+    ///   let buffer = b"Hello World!\01234";
+    ///   let mut reader = BytesReader::new(buffer);
+    ///   let r = reader.read_ascii_string("Hello World!\01234".len())?;  // after \0 is trim
+    ///   //assert_eq!(r ,"Hello World!");
+    ///   return Ok(r)
+    /// }
+    /// ```
+    /// 
     fn read_ascii_string(&mut self,size:usize) -> Result<String,Error>{
         self.check_bound(size)?;
         let ptr = self.ptr;
@@ -689,7 +679,7 @@ impl BinaryReader for BytesReader {
 
 
 #[cfg(feature="stream")]
-impl<R:BufRead> BinaryReader for StreamReader<R> {
+impl<R:BufRead+Seek> BinaryReader for StreamReader<R> {
 
     fn set_endian(&mut self, endian: Endian) {
         self.endian = endian;
@@ -1036,6 +1026,10 @@ impl<R:BufRead> BinaryReader for StreamReader<R> {
         let mut array :Vec<u8> = (0..size).map(|_| 0).collect();
         self.reader.read_exact(&mut array)?;
         Ok(size)
+    }
+
+    fn offset(&mut self) -> std::result::Result<u64,Error> {
+        self.reader.seek(SeekFrom::Current(0))
     }
 }
 
