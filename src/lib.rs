@@ -7,4 +7,5 @@ pub mod async_reader;
 pub mod io;
 pub mod endian;
 pub use endian::*;
-
+#[cfg(test)]
+pub mod test;

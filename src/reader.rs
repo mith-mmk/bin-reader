@@ -646,15 +646,13 @@ impl BinaryReader for BytesReader {
                 self.ptr = pos as usize;
                 Ok(self.ptr as u64)
             },
-            SeekFrom::End(pos)=>{
-                if pos >= usize::MAX as i64 {
-                    let s = format!("BytesReader max offset is usize length but set {}",pos);
-                    return Err( Error::new(ErrorKind::Other, s))
-                } else if self.buffer.len() as i64 + pos < 0 || pos >= self.buffer.len() as i64 {
-                    let s = format!("set offset {},but buffer length is{}",pos,self.buffer.len());
+            SeekFrom::End(pos_)=>{
+                let pos = self.buffer.len() as i64 + pos_;
+                if pos < 0 || pos >= (self.buffer.len() as i64) {
+                    let s = format!("set offset {},but buffer length is {}",pos,self.buffer.len());
                     return Err( Error::new(ErrorKind::Other, s))
                 }
-                self.ptr = self.buffer.len() + pos as usize;
+                self.ptr = pos as usize;
                 Ok(self.ptr as u64)
             },
             SeekFrom::Current(pos)=>{
