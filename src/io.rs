@@ -4,15 +4,17 @@
 //! 
 //! use feature="util"
 
+use crate::Endian;
+
 #[allow(unused)]
 #[inline]
-pub fn read_f32 (buf: &[u8],ptr: usize,flag: bool) -> f32 {
-    f32::from_bits(read_u32(buf,ptr,flag))
+pub fn read_f32 (buf: &[u8],ptr: usize,endian: Endian) -> f32 {
+    f32::from_bits(read_u32(buf,ptr,endian))
 }
 #[allow(unused)]
 #[inline]
-pub fn read_f64 (buf: &[u8],ptr: usize,flag: bool) -> f64 {
-    f64::from_bits(read_u64(buf,ptr,flag))
+pub fn read_f64 (buf: &[u8],ptr: usize,endian: Endian) -> f64 {
+    f64::from_bits(read_u64(buf,ptr,endian))
 }
 
 #[allow(unused)]
@@ -140,8 +142,8 @@ pub fn read_i64_le (buf: &[u8],ptr: usize ) -> i64 {
 
 #[allow(unused)]
 #[inline]
-pub fn read_u16 (buf: &[u8],ptr: usize ,flag: bool) -> u16 {
-    if flag {
+pub fn read_u16 (buf: &[u8],ptr: usize ,endian: Endian) -> u16 {
+    if endian == Endian::LittleEndian {
         read_u16_le(buf,ptr)
     } else {
         read_u16_be(buf,ptr)
@@ -150,8 +152,8 @@ pub fn read_u16 (buf: &[u8],ptr: usize ,flag: bool) -> u16 {
 
 #[allow(unused)]
 #[inline]
-pub fn read_u32 (buf: &[u8],ptr: usize ,flag: bool) -> u32 {
-    if flag {
+pub fn read_u32 (buf: &[u8],ptr: usize ,endian: Endian) -> u32 {
+    if endian == Endian::LittleEndian {
         read_u32_le(buf,ptr)
     } else {
         read_u32_be(buf,ptr)
@@ -160,8 +162,8 @@ pub fn read_u32 (buf: &[u8],ptr: usize ,flag: bool) -> u32 {
 
 #[allow(unused)]
 #[inline]
-pub fn read_u64 (buf: &[u8],ptr: usize ,flag: bool) -> u64 {
-    if flag {
+pub fn read_u64 (buf: &[u8],ptr: usize ,endian: Endian) -> u64 {
+    if endian == Endian::LittleEndian {
         read_u64_le(buf,ptr)
     } else {
         read_u64_be(buf,ptr)
@@ -170,8 +172,8 @@ pub fn read_u64 (buf: &[u8],ptr: usize ,flag: bool) -> u64 {
 
 #[allow(unused)]
 #[inline]
-pub fn read_i16 (buf: &[u8],ptr: usize ,flag: bool) -> i16 {
-    if flag {
+pub fn read_i16 (buf: &[u8],ptr: usize ,endian: Endian) -> i16 {
+    if endian == Endian::LittleEndian {
         read_i16_le(buf,ptr)
     } else {
         read_i16_be(buf,ptr)
@@ -180,8 +182,8 @@ pub fn read_i16 (buf: &[u8],ptr: usize ,flag: bool) -> i16 {
 
 #[allow(unused)]
 #[inline]
-pub fn read_i32 (buf: &[u8],ptr: usize ,flag: bool) -> i32 {
-    if flag {
+pub fn read_i32 (buf: &[u8],ptr: usize ,endian: Endian) -> i32 {
+    if endian == Endian::LittleEndian {
         read_i32_le(buf,ptr)
     } else {
         read_i32_be(buf,ptr)
@@ -190,8 +192,8 @@ pub fn read_i32 (buf: &[u8],ptr: usize ,flag: bool) -> i32 {
 
 #[allow(unused)]
 #[inline]
-pub fn read_i64 (buf: &[u8],ptr: usize ,flag: bool) -> i64 {
-    if flag {
+pub fn read_i64 (buf: &[u8],ptr: usize ,endian: Endian) -> i64 {
+    if endian == Endian::LittleEndian {
         read_i64_le(buf,ptr)
     } else {
         read_i64_be(buf,ptr)
@@ -220,7 +222,7 @@ pub fn read_string (buf: &[u8],ptr: usize ,num: usize) -> String {
 
 #[allow(unused)]
 #[inline]
-pub fn read_bytes (buf: &[u8],ptr: usize ,length: usize) -> Vec<u8> {
+pub fn read_bytes_as_vec (buf: &[u8],ptr: usize ,length: usize) -> Vec<u8> {
     let mut c = Vec::new();
     for i in 0..length {
         c.push(buf[ptr + i]);
