@@ -67,7 +67,7 @@ impl<R: AsyncBufReadExt + Send + std::marker::Unpin>  AsyncBytesReader<R> {
             Endian::BigEndian => {
                 self.read_u16_be().await
             },
-            Endian::LittleEndtian => {
+            Endian::LittleEndian => {
                 self.read_u16_le().await
             }
         }
@@ -78,7 +78,7 @@ impl<R: AsyncBufReadExt + Send + std::marker::Unpin>  AsyncBytesReader<R> {
             Endian::BigEndian => {
                 self.read_u32_be().await
             },
-            Endian::LittleEndtian => {
+            Endian::LittleEndian => {
                 self.read_u32_le().await
             }
         }
@@ -89,7 +89,7 @@ impl<R: AsyncBufReadExt + Send + std::marker::Unpin>  AsyncBytesReader<R> {
             Endian::BigEndian => {
                 self.read_u64_be().await
             },
-            Endian::LittleEndtian => {
+            Endian::LittleEndian => {
                 self.read_u64_le().await
             }
         }
@@ -100,7 +100,7 @@ impl<R: AsyncBufReadExt + Send + std::marker::Unpin>  AsyncBytesReader<R> {
             Endian::BigEndian => {
                 self.read_u128_be().await
             },
-            Endian::LittleEndtian => {
+            Endian::LittleEndian => {
                 self.read_u128_le().await
             }
         }
@@ -111,7 +111,7 @@ impl<R: AsyncBufReadExt + Send + std::marker::Unpin>  AsyncBytesReader<R> {
             Endian::BigEndian => {
                 self.read_i16_be().await
             },
-            Endian::LittleEndtian => {
+            Endian::LittleEndian => {
                 self.read_i16_le().await
             }
         }
@@ -122,7 +122,7 @@ impl<R: AsyncBufReadExt + Send + std::marker::Unpin>  AsyncBytesReader<R> {
             Endian::BigEndian => {
                 self.read_i32_be().await
             },
-            Endian::LittleEndtian => {
+            Endian::LittleEndian => {
                 self.read_i32_le().await
             }
         }
@@ -133,7 +133,7 @@ impl<R: AsyncBufReadExt + Send + std::marker::Unpin>  AsyncBytesReader<R> {
             Endian::BigEndian => {
                 self.read_i64_be().await
             },
-            Endian::LittleEndtian => {
+            Endian::LittleEndian => {
                 self.read_i64_le().await
             }
         }
@@ -144,7 +144,7 @@ impl<R: AsyncBufReadExt + Send + std::marker::Unpin>  AsyncBytesReader<R> {
             Endian::BigEndian => {
                 self.read_i128_be().await
             },
-            Endian::LittleEndtian => {
+            Endian::LittleEndian => {
                 self.read_i128_le().await
             }
         }
@@ -155,7 +155,7 @@ impl<R: AsyncBufReadExt + Send + std::marker::Unpin>  AsyncBytesReader<R> {
             Endian::BigEndian => {
                 self.read_f32_be().await
             },
-            Endian::LittleEndtian => {
+            Endian::LittleEndian => {
                 self.read_f32_le().await
             }
         }
@@ -166,7 +166,7 @@ impl<R: AsyncBufReadExt + Send + std::marker::Unpin>  AsyncBytesReader<R> {
             Endian::BigEndian => {
                 self.read_f64_be().await
             },
-            Endian::LittleEndtian => {
+            Endian::LittleEndian => {
                 self.read_f64_le().await
             }
         }

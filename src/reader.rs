@@ -1,9 +1,11 @@
 //! A reader default uses system endianness
 //! If you will use another endianness,use set_endian.
 
+use crate::Endian;
+use std::io::Seek;
+use std::io::SeekFrom;
 use std::io::Error;
 use std::io::ErrorKind;
-use crate::Endian;
 
 #[cfg(feature="codec")]
 use encoding_rs::*;
@@ -120,7 +122,11 @@ pub trait BinaryReader {
     fn read_local_string(&mut self,size:usize,code: CodeType) -> Result<String,Error>;
 
     /// skip size byte
-    fn skip_ptr(&mut self,size:usize) -> Result<usize,Error>; 
+    fn skip_ptr(&mut self,size:usize) -> Result<usize,Error>;
+}
+
+pub trait BinaryReaderSeek {
+    fn offset(&mut self) -> Result<u64,Error>;
 }
 
 /// BytesReader from creating Slice &\[u8\] or Vec<u8>,
@@ -158,7 +164,6 @@ impl BytesReader {
             ptr: 0,
             endian: crate::system_endian(),
         } 
-
     }
 
     fn check_bound(&mut self,size:usize) -> Result<(),Error> {
@@ -168,6 +173,76 @@ impl BytesReader {
         } else {
             Ok(())
         }
+    }
+
+    pub fn read_bytes(&mut self,len: usize) -> Result<&[u8],Error>{
+        self.check_bound(len)?;
+        Ok(&self.buffer[self.ptr..self.ptr+len])
+    }
+}
+
+
+impl Seek for BytesReader {
+    fn seek(&mut self, seek: SeekFrom) -> std::result::Result<u64, Error> {
+        match seek {
+            SeekFrom::Start(pos)=>{
+                if pos >= usize::MAX as u64 {
+                    let s = format!("BytesReader max offset is usize length but set {}",pos);
+                    return Err( Error::new(ErrorKind::Other, s))
+                } else if pos >= self.buffer.len() as u64 {
+                    let s = format!("set offset {},but buffer length is{}",pos,self.buffer.len());
+                    return Err( Error::new(ErrorKind::Other, s))
+                }
+                self.ptr = pos as usize;
+                Ok(self.ptr as u64)
+            },
+            SeekFrom::End(pos)=>{
+                if pos >= usize::MAX as i64 {
+                    let s = format!("BytesReader max offset is usize length but set {}",pos);
+                    return Err( Error::new(ErrorKind::Other, s))
+                } else if self.buffer.len() as i64 + pos < 0 || pos >= self.buffer.len() as i64 {
+                    let s = format!("set offset {},but buffer length is{}",pos,self.buffer.len());
+                    return Err( Error::new(ErrorKind::Other, s))
+                }
+                self.ptr = self.buffer.len() + pos as usize;
+                Ok(self.ptr as u64)
+            },
+            SeekFrom::Current(pos)=>{
+                let ptr = (self.ptr as i64) + pos;
+                if ptr >= usize::MAX as i64 {
+                    let s = format!("BytesReader max offset is usize length but set {}",ptr);
+                    return Err( Error::new(ErrorKind::Other, s))
+                } else if self.buffer.len() as i64 <= ptr || ptr < 0 {
+                    let s = format!("set offset {},but buffer length is{}",ptr,self.buffer.len());
+                    return Err( Error::new(ErrorKind::Other, s))
+                }
+                self.ptr = ptr as usize;
+                Ok(self.ptr as u64)
+            },
+        }
+    }
+}
+
+impl BinaryReaderSeek for BytesReader {
+    fn offset(&mut self) -> Result<u64,Error> {
+        Ok(self.ptr as u64)
+    }
+}
+
+#[cfg(feature="stream")]
+impl<R:BufRead> StreamReader<R> {
+    pub fn new(reader: R) -> StreamReader<R> {
+        StreamReader {
+            reader: reader,
+            endian: crate::system_endian(),
+        }
+    }
+}
+
+#[cfg(feature="stream")]
+impl<R:BufRead + Seek> BinaryReaderSeek for StreamReader<R> {
+    fn offset(&mut self) -> Result<u64,Error> {
+        return self.reader.seek(SeekFrom::Current(0))
     }
 }
 
@@ -221,7 +296,7 @@ impl BinaryReader for BytesReader {
             Endian::BigEndian => {
                 self.read_u16_be()
             },
-            Endian::LittleEndtian => {
+            Endian::LittleEndian => {
                 self.read_u16_le()
             }
         }
@@ -232,7 +307,7 @@ impl BinaryReader for BytesReader {
             Endian::BigEndian => {
                 self.read_u32_be()
             },
-            Endian::LittleEndtian => {
+            Endian::LittleEndian => {
                 self.read_u32_le()
             }
         }
@@ -243,7 +318,7 @@ impl BinaryReader for BytesReader {
             Endian::BigEndian => {
                 self.read_u64_be()
             },
-            Endian::LittleEndtian => {
+            Endian::LittleEndian => {
                 self.read_u64_le()
             }
         }
@@ -254,7 +329,7 @@ impl BinaryReader for BytesReader {
             Endian::BigEndian => {
                 self.read_u128_be()
             },
-            Endian::LittleEndtian => {
+            Endian::LittleEndian => {
                 self.read_u128_le()
             }
         }
@@ -265,7 +340,7 @@ impl BinaryReader for BytesReader {
             Endian::BigEndian => {
                 self.read_i16_be()
             },
-            Endian::LittleEndtian => {
+            Endian::LittleEndian => {
                 self.read_i16_le()
             }
         }
@@ -276,7 +351,7 @@ impl BinaryReader for BytesReader {
             Endian::BigEndian => {
                 self.read_i32_be()
             },
-            Endian::LittleEndtian => {
+            Endian::LittleEndian => {
                 self.read_i32_le()
             }
         }
@@ -287,7 +362,7 @@ impl BinaryReader for BytesReader {
             Endian::BigEndian => {
                 self.read_i64_be()
             },
-            Endian::LittleEndtian => {
+            Endian::LittleEndian => {
                 self.read_i64_le()
             }
         }
@@ -298,7 +373,7 @@ impl BinaryReader for BytesReader {
             Endian::BigEndian => {
                 self.read_i128_be()
             },
-            Endian::LittleEndtian => {
+            Endian::LittleEndian => {
                 self.read_i128_le()
             }
         }
@@ -309,7 +384,7 @@ impl BinaryReader for BytesReader {
             Endian::BigEndian => {
                 self.read_f32_be()
             },
-            Endian::LittleEndtian => {
+            Endian::LittleEndian => {
                 self.read_f32_le()
             }
         }
@@ -320,7 +395,7 @@ impl BinaryReader for BytesReader {
             Endian::BigEndian => {
                 self.read_f64_be()
             },
-            Endian::LittleEndtian => {
+            Endian::LittleEndian => {
                 self.read_f64_le()
             }
         }
@@ -611,20 +686,11 @@ impl BinaryReader for BytesReader {
 }
 
 
-#[cfg(feature="stream")]
-impl<R:BufRead> StreamReader<R> {
 
-
-    pub fn new(reader: R) -> StreamReader<R> {
-        StreamReader {
-            reader: reader,
-            endian: crate::system_endian(),
-        }
-    }
-}
 
 #[cfg(feature="stream")]
 impl<R:BufRead> BinaryReader for StreamReader<R> {
+
     fn set_endian(&mut self, endian: Endian) {
         self.endian = endian;
     }
@@ -669,7 +735,7 @@ impl<R:BufRead> BinaryReader for StreamReader<R> {
             Endian::BigEndian => {
                 self.read_u16_be()
             },
-            Endian::LittleEndtian => {
+            Endian::LittleEndian => {
                 self.read_u16_le()
             }
         }
@@ -680,7 +746,7 @@ impl<R:BufRead> BinaryReader for StreamReader<R> {
             Endian::BigEndian => {
                 self.read_u32_be()
             },
-            Endian::LittleEndtian => {
+            Endian::LittleEndian => {
                 self.read_u32_le()
             }
         }
@@ -691,7 +757,7 @@ impl<R:BufRead> BinaryReader for StreamReader<R> {
             Endian::BigEndian => {
                 self.read_u64_be()
             },
-            Endian::LittleEndtian => {
+            Endian::LittleEndian => {
                 self.read_u64_le()
             }
         }
@@ -702,7 +768,7 @@ impl<R:BufRead> BinaryReader for StreamReader<R> {
             Endian::BigEndian => {
                 self.read_u128_be()
             },
-            Endian::LittleEndtian => {
+            Endian::LittleEndian => {
                 self.read_u128_le()
             }
         }
@@ -713,7 +779,7 @@ impl<R:BufRead> BinaryReader for StreamReader<R> {
             Endian::BigEndian => {
                 self.read_i16_be()
             },
-            Endian::LittleEndtian => {
+            Endian::LittleEndian => {
                 self.read_i16_le()
             }
         }
@@ -724,7 +790,7 @@ impl<R:BufRead> BinaryReader for StreamReader<R> {
             Endian::BigEndian => {
                 self.read_i32_be()
             },
-            Endian::LittleEndtian => {
+            Endian::LittleEndian => {
                 self.read_i32_le()
             }
         }
@@ -735,7 +801,7 @@ impl<R:BufRead> BinaryReader for StreamReader<R> {
             Endian::BigEndian => {
                 self.read_i64_be()
             },
-            Endian::LittleEndtian => {
+            Endian::LittleEndian => {
                 self.read_i64_le()
             }
         }
@@ -746,7 +812,7 @@ impl<R:BufRead> BinaryReader for StreamReader<R> {
             Endian::BigEndian => {
                 self.read_i128_be()
             },
-            Endian::LittleEndtian => {
+            Endian::LittleEndian => {
                 self.read_i128_le()
             }
         }
@@ -757,7 +823,7 @@ impl<R:BufRead> BinaryReader for StreamReader<R> {
             Endian::BigEndian => {
                 self.read_f32_be()
             },
-            Endian::LittleEndtian => {
+            Endian::LittleEndian => {
                 self.read_f32_le()
             }
         }
@@ -768,7 +834,7 @@ impl<R:BufRead> BinaryReader for StreamReader<R> {
             Endian::BigEndian => {
                 self.read_f64_be()
             },
-            Endian::LittleEndtian => {
+            Endian::LittleEndian => {
                 self.read_f64_le()
             }
         }
@@ -970,5 +1036,12 @@ impl<R:BufRead> BinaryReader for StreamReader<R> {
         let mut array :Vec<u8> = (0..size).map(|_| 0).collect();
         self.reader.read_exact(&mut array)?;
         Ok(size)
+    }
+}
+
+#[cfg(feature="stream")]
+impl<R: Seek + BufRead> Seek for StreamReader<R> {
+        fn seek(&mut self, seek: std::io::SeekFrom) -> std::result::Result<u64, Error> {
+        self.reader.seek(seek)
     }
 }
