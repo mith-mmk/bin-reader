@@ -70,14 +70,6 @@ pub fn read_u64_be (buf: &[u8],ptr: usize) -> u64 {
     (buf[ptr+6] as u64) << 8  | (buf[ptr+7] as u64)  
 }
 
-#[allow(unused)]
-#[inline]
-pub fn read_u128be (buf: &[u8],ptr: usize) -> u128 {
-    let b0 = read_u64_be(buf,ptr);
-    let b1 = read_u64_be(buf,ptr);
-    ((b0 as u128) << 64) | b1 as u128
-}
-
 
 #[allow(unused)]
 #[inline]
@@ -198,14 +190,70 @@ pub fn read_i64 (buf: &[u8],ptr: usize ,endian: Endian) -> i64 {
     } else {
         read_i64_be(buf,ptr)
     }
-} 
+}
+
+#[allow(unused)]
+#[inline]
+pub fn read_u128 (buf: &[u8],ptr: usize,endian: Endian) -> u128 {
+    if endian == Endian::LittleEndian {
+        read_u128_le(buf,ptr)
+    } else {
+        read_u128_be(buf,ptr)
+    }
+}
+
+#[allow(unused)]
+#[inline]
+pub fn read_u128_be (buf: &[u8],ptr: usize) -> u128 {
+    let b0 = read_u64_be(buf,ptr);
+    let b1 = read_u64_be(buf,ptr);
+    ((b0 as u128) << 64) | b1 as u128
+}
+
+#[allow(unused)]
+#[inline]
+pub fn read_u128_le (buf: &[u8],ptr: usize) -> u128 {
+    let b0 = read_u64_le(buf,ptr);
+    let b1 = read_u64_le(buf,ptr);
+    ((b1 as u128) << 64) | b0 as u128
+}
+
+#[allow(unused)]
+#[inline]
+pub fn read_i128 (buf: &[u8],ptr: usize,endian: Endian) -> i128 {
+    if endian == Endian::LittleEndian {
+        read_i128_le(buf,ptr)
+    } else {
+        read_i128_be(buf,ptr)
+    }
+}
+
+#[allow(unused)]
+#[inline]
+pub fn read_i128_be (buf: &[u8],ptr: usize) -> i128 {
+    let b0 = read_u64_be(buf,ptr);
+    let b1 = read_u64_be(buf,ptr);
+    (((b0 as u128) << 64) | b1 as u128) as i128
+}
+
+#[allow(unused)]
+#[inline]
+pub fn read_i128_le (buf: &[u8],ptr: usize) -> i128 {
+    let b0 = read_u64_le(buf,ptr);
+    let b1 = read_u64_le(buf,ptr);
+    (((b1 as u128) << 64) | b0 as u128) as i128
+}
+
+
+pub fn read_ascii_string (buf: &[u8],ptr: usize ,num: usize) -> String {
+    read_string(buf,ptr,num)
+}
 
 #[allow(unused)]
 #[inline]
 pub fn read_string (buf: &[u8],ptr: usize ,num: usize) -> String {
     let mut s = Vec::new();
     for i in 0..num {
-//        if buf.len() >= ptr + i {break;}
         if buf[ptr + i] == 0 {break;}
         s.push(buf[ptr + i]);
     }
