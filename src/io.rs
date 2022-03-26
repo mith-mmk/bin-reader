@@ -2,6 +2,7 @@
 //! When It analyzes a complex binary,it's data is moving back and forth.
 //! Therefor it needs direct access functions.
 //! 
+//! use feature="util"
 
 #[allow(unused)]
 #[inline]
@@ -38,7 +39,7 @@ pub fn read_u16_be (buf: &[u8],ptr: usize ) -> u16 {
 #[inline]
 pub fn read_i16_be (buf: &[u8],ptr: usize ) -> i16 {
         ((
-            &(buf[ptr] as u16) << 8 | (buf[ptr+1] as u16)
+            (buf[ptr] as u16) << 8 | (buf[ptr+1] as u16)
         ) as u16) as i16
 }
 
@@ -91,9 +92,9 @@ pub fn read_i64_be (buf: &[u8],ptr: usize ) -> i64 {
 #[inline]
 pub fn read_i16_le (buf: &[u8],ptr: usize ) -> i16 {
     unsafe {
-        *((
-            &(buf[ptr] as u16) << 8 | (buf[ptr+1] as u16)
-        ) as *const u16) as i16
+        (
+            (buf[ptr] as u16) << 8 | (buf[ptr+1] as u16)
+        ) as i16
     }
 }
 
