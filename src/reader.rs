@@ -708,8 +708,8 @@ impl<R:BufRead+Seek> BinaryReader for StreamReader<R> {
     // However it's behavior dependences read buffer size.
     fn read_bytes_no_move(&mut self,len: usize) -> Result<Vec<u8>,Error> {
         let buffer = self.reader.fill_buf()?;
-        if buffer.len() <= len {
-            let err = "Data shotage";
+        if buffer.len() < len {
+            let err = format!("Data shotage,request {} but read {} bytes",len,buffer.len());
             return Err(Error::new(ErrorKind::Other,err));
         }
         let array: Vec<u8> = (0..len).map(|i| buffer[i]).collect();
