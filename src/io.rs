@@ -278,3 +278,322 @@ pub fn read_bytes_as_vec (buf: &[u8],ptr: usize ,length: usize) -> Vec<u8> {
     c
 }
 
+
+#[allow(unused)]
+#[inline]
+pub fn write_byte(num:u8,buf: &mut Vec<u8>) {
+    buf.push(num);
+}
+
+#[allow(unused)]
+#[inline]
+pub fn write_i8(num:i8,buf: &mut Vec<u8>) {
+    buf.push(num as u8);
+}
+
+#[allow(unused)]
+#[inline]
+pub fn write_u16_be(num:u16,buf: &mut Vec<u8>) {
+    let bytes = num.to_be_bytes();
+    for b in bytes.into_iter() {
+        buf.push(b);
+    }
+}
+
+#[allow(unused)]
+#[inline]
+pub fn write_i16_be (num:i16,buf: &mut Vec<u8> ) {
+    let bytes = num.to_be_bytes();
+    for b in bytes.into_iter() {
+        buf.push(b);
+    }
+}
+
+#[allow(unused)]
+#[inline]
+pub fn write_u32_be  (num:u32,buf: &mut Vec<u8> ) {
+    let bytes = num.to_be_bytes();
+    for b in bytes.into_iter() {
+        buf.push(b);
+    }
+}
+
+#[allow(unused)]
+#[inline]
+pub fn write_i32_be (num:i32,buf: &mut Vec<u8> ) {
+    let bytes = num.to_be_bytes();
+    for b in bytes.into_iter() {
+        buf.push(b);
+    }
+}
+
+#[allow(unused)]
+#[inline]
+pub fn write_u64_be(num:u64,buf: &mut Vec<u8> ) {
+    let bytes = num.to_be_bytes();
+    for b in bytes.into_iter() {
+        buf.push(b);
+    }
+}
+
+#[allow(unused)]
+#[inline]
+pub fn write_i64_be(num:i64,buf: &mut Vec<u8> ) {
+    let bytes = num.to_be_bytes();
+    for b in bytes.into_iter() {
+        buf.push(b);
+    }
+}
+
+#[allow(unused)]
+#[inline]
+pub fn write_i16_le(num:i16,buf: &mut Vec<u8> ) {
+    let bytes = num.to_le_bytes();
+    for b in bytes.into_iter() {
+        buf.push(b);
+    }
+}
+
+#[allow(unused)]
+#[inline]
+pub fn write_u16_le(num:u16,buf: &mut Vec<u8> ) {
+    let bytes = num.to_le_bytes();
+    for b in bytes.into_iter() {
+        buf.push(b);
+    }
+}
+
+#[allow(unused)]
+#[inline]
+pub fn write_u32_le(num:u32,buf: &mut Vec<u8> ) {
+    let bytes = num.to_le_bytes();
+    for b in bytes.into_iter() {
+        buf.push(b);
+    }
+}
+
+#[allow(unused)]
+#[inline]
+pub fn write_i32_le(num:i32,buf: &mut Vec<u8> ) {
+    let bytes = num.to_le_bytes();
+    for b in bytes.into_iter() {
+        buf.push(b);
+    }
+}
+
+#[allow(unused)]
+#[inline]
+pub fn write_u64_le(num:u64,buf: &mut Vec<u8> ) {
+    let bytes = num.to_le_bytes();
+    for b in bytes.into_iter() {
+        buf.push(b);
+    }
+}
+
+#[allow(unused)]
+#[inline]
+pub fn write_i64_le(num:i64,buf: &mut Vec<u8> ) {
+    let bytes = num.to_le_bytes();
+    for b in bytes.into_iter() {
+        buf.push(b);
+    }
+}
+
+#[allow(unused)]
+#[inline]
+pub fn write_u16(num:u16,buf: &mut Vec<u8>,endian: Endian) {    
+    if endian == Endian::BigEndian {
+        write_u16_be(num, buf)
+    } else {
+        write_u16_le(num, buf)
+    }
+}
+
+#[allow(unused)]
+#[inline]
+pub fn write_u32(num:u32,buf: &mut Vec<u8>,endian: Endian) { 
+    if endian == Endian::BigEndian {
+        write_u32_be(num, buf)
+    } else {
+        write_u32_le(num, buf)
+    }
+} 
+
+#[allow(unused)]
+#[inline]
+pub fn write_u64(num:u64,buf: &mut Vec<u8>,endian: Endian) { 
+    if endian == Endian::BigEndian {
+        write_u64_be(num, buf)
+    } else {
+        write_u64_le(num, buf)
+    }
+} 
+
+#[allow(unused)]
+#[inline]
+pub fn write_i16(num:i16,buf: &mut Vec<u8>,endian: Endian) { 
+    if endian == Endian::BigEndian {
+        write_i16_be(num, buf)
+    } else {
+        write_i16_le(num, buf)
+    }
+} 
+
+#[allow(unused)]
+#[inline]
+pub fn write_i32(num:i32,buf: &mut Vec<u8>,endian: Endian) { 
+    if endian == Endian::BigEndian {
+        write_i32_be(num, buf)
+    } else {
+        write_i32_le(num, buf)
+    }
+} 
+
+#[allow(unused)]
+#[inline]
+pub fn write_i64(num:i64,buf: &mut Vec<u8>,endian: Endian) { 
+    if endian == Endian::BigEndian {
+        write_i64_be(num, buf)
+    } else {
+        write_i64_le(num, buf)
+    }
+} 
+
+#[allow(unused)]
+#[inline]
+pub fn write_u128(num:u128,buf: &mut Vec<u8>,endian: Endian) { 
+    if endian == Endian::BigEndian {
+        write_u128_be(num, buf)
+    } else {
+        write_u128_le(num, buf)
+    }
+} 
+
+#[allow(unused)]
+#[inline]
+pub fn write_u128_be(num:u128,buf: &mut Vec<u8> ) {
+    let bytes = num.to_be_bytes();
+    for b in bytes.into_iter() {
+        buf.push(b);
+    }
+}
+
+#[allow(unused)]
+#[inline]
+pub fn write_u128_le(num:u128,buf: &mut Vec<u8> ) {
+    let bytes = num.to_le_bytes();
+    for b in bytes.into_iter() {
+        buf.push(b);
+    }
+}
+
+#[allow(unused)]
+#[inline]
+pub fn write_i128(num:i128,buf: &mut Vec<u8>,endian: Endian) { 
+    if endian == Endian::BigEndian {
+        write_i128_be(num, buf)
+    } else {
+        write_i128_le(num, buf)
+    }
+} 
+
+#[allow(unused)]
+#[inline]
+pub fn write_i128_be(num:i128,buf: &mut Vec<u8> ) {
+    let bytes = num.to_be_bytes();
+    for b in bytes.into_iter() {
+        buf.push(b);
+    }
+}
+
+#[allow(unused)]
+#[inline]
+pub fn write_i128_le(num:i128,buf: &mut Vec<u8> ) {
+    let bytes = num.to_le_bytes();
+    for b in bytes.into_iter() {
+        buf.push(b);
+    }
+}
+
+pub fn write_ascii_string(srting:String,buf: &mut Vec<u8> ) {
+    let bytes = srting.as_bytes();
+    for b in bytes.into_iter() {
+        buf.push(*b);
+    }
+    buf.push(0)
+}
+
+#[allow(unused)]
+#[inline]
+pub fn write_string(srting:String,buf: &mut Vec<u8>) {
+    let bytes = srting.as_bytes();
+    for b in bytes.into_iter() {
+        buf.push(*b);
+    }
+}
+
+#[allow(unused)]
+#[inline]
+pub fn write_bytes(bytes:&[u8],buf: &mut Vec<u8>) {
+    for b in bytes.into_iter() {
+        buf.push(*b);
+    }
+}
+
+#[allow(unused)]
+#[inline]
+pub fn write_f32(num:f32,buf: &mut Vec<u8>,endian: Endian) { 
+    if endian == Endian::BigEndian {
+        write_f32_be(num, buf)
+    } else {
+        write_f32_le(num, buf)
+    }
+} 
+
+
+#[allow(unused)]
+#[inline]
+pub fn write_f32_be(num:f32,buf: &mut Vec<u8>) {
+    let bytes = num.to_be_bytes();
+    for b in bytes.into_iter() {
+        buf.push(b);
+    }
+}
+
+#[allow(unused)]
+#[inline]
+pub fn write_f32_le(num:f32,buf: &mut Vec<u8>) {
+    let bytes = num.to_le_bytes();
+    for b in bytes.into_iter() {
+        buf.push(b);
+    }
+}
+
+#[allow(unused)]
+#[inline]
+pub fn write_f64(num:f64,buf: &mut Vec<u8>,endian: Endian) { 
+    if endian == Endian::BigEndian {
+        write_f64_be(num, buf)
+    } else {
+        write_f64_le(num, buf)
+    }
+} 
+
+
+#[allow(unused)]
+#[inline]
+pub fn write_f64_be(num:f64,buf: &mut Vec<u8>) {
+    let bytes = num.to_be_bytes();
+    for b in bytes.into_iter() {
+        buf.push(b);
+    }
+}
+
+#[allow(unused)]
+#[inline]
+pub fn write_f64_le(num:f64,buf: &mut Vec<u8>) {
+    let bytes = num.to_le_bytes();
+    for b in bytes.into_iter() {
+        buf.push(b);
+    }
+}

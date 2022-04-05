@@ -1,6 +1,8 @@
 //! A reader default uses system endianness
 //! If you will use another endianness,use set_endian.
 
+use std::io::Read;
+use std::io::Cursor;
 use crate::Endian;
 use std::io::Seek;
 use std::io::SeekFrom;
@@ -34,6 +36,7 @@ pub trait BinaryReader {
     
     fn read_byte(&mut self) -> Result<u8,Error>;
     fn read_u8(&mut self) -> Result<u8,Error>;
+    fn read_bytes(&mut self,array: &mut [u8]) -> Result<(),Error>;
 //    fn read_bytes(&mut self,len: usize) -> Result<&[u8],Error>;
     fn read_bytes_as_vec(&mut self,len: usize) -> Result<Vec<u8>,Error>;
 
@@ -144,10 +147,6 @@ impl BytesReader {
         }
     }
 
-    pub fn read_bytes(&mut self,len: usize) -> Result<&[u8],Error>{
-        self.check_bound(len)?;
-        Ok(&self.buffer[self.ptr..self.ptr+len])
-    }
 }
 
 
@@ -161,7 +160,24 @@ impl<R:BufRead + Seek> StreamReader<R> {
     }
 }
 
+
+
+
 #[cfg(feature="stream")]
+impl<R> From<R> for StreamReader<Cursor<R>> 
+    where R: Read {
+
+    fn from(reader: R) -> Self {
+        let reader = Cursor::new(reader);
+        Self {
+            reader: reader,
+            endian: crate::system_endian(),
+        }
+
+    }
+}
+
+
 impl BinaryReader for BytesReader {
     fn offset(&mut self) -> Result<u64,Error> {
         return Ok(self.ptr as u64)
@@ -188,6 +204,16 @@ impl BinaryReader for BytesReader {
 
     fn read_i8(&mut self) -> Result<i8,Error>{
         Ok(self.read_byte()? as i8)
+    }
+
+    fn read_bytes(&mut self,array: &mut [u8]) -> Result<(),Error> {
+        let len = array.len();
+        self.check_bound(len)?;
+        for i in 0..len {
+            array[i] = self.buffer[self.ptr + i];
+        }
+        self.ptr += len;
+        Ok(())
     }
 
     fn read_bytes_as_vec(&mut self,len: usize) -> Result<Vec<u8>,Error>{
@@ -672,8 +698,6 @@ impl BinaryReader for BytesReader {
 }
 
 
-
-
 #[cfg(feature="stream")]
 impl<R:BufRead+Seek> BinaryReader for StreamReader<R> {
 
@@ -697,6 +721,12 @@ impl<R:BufRead+Seek> BinaryReader for StreamReader<R> {
     fn read_i8(&mut self) -> Result<i8,Error>{
         Ok(self.read_byte()? as i8)
     }
+
+    fn read_bytes(&mut self, array: &mut [u8]) -> std::result::Result<(), Error> {
+        self.reader.read_exact(array)?;
+        Ok(())
+    }
+
 
     fn read_bytes_as_vec(&mut self,len: usize) -> Result<Vec<u8>,Error>{
         let mut array: Vec<u8> = (0..len).map(|_| 0).collect();
