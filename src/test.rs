@@ -126,6 +126,18 @@ use crate::Endian;
         reader.set_endian(Endian::BigEndian);
         let r = reader.read_f64()?;
         assert_eq!(r ,-17.19);
+
+        let buffer: [u8; 16] =  [0x00, 0x31, 0x00, 0x31, 0x00, 0x32, 0x00, 0x33, 0x00, 0x34, 0x00, 0x35, 0x00, 0x36, 0x00, 0x37];
+        let mut reader = BytesReader::new(&buffer);
+        reader.set_endian(Endian::BigEndian);
+        let r = reader.read_utf16_string(8)?;
+        assert_eq!(r ,"11234567");
+
+        let buffer: [u8; 16] = [0x31, 0x00, 0x31, 0x00, 0x32, 0x00, 0x33, 0x00, 0x34, 0x00, 0x35, 0x00, 0x36, 0x00, 0x37, 0x00];
+        let mut reader = BytesReader::new(&buffer);
+        reader.set_endian(Endian::LittleEndian);
+        let r = reader.read_utf16_string(8)?;
+        assert_eq!(r ,"11234567");
         
         let buffer : Vec<u8> = (0..255).map(|i| i).collect();
         let mut reader = BytesReader::new(&buffer);

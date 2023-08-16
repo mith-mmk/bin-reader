@@ -269,6 +269,29 @@ pub fn read_string (buf: &[u8],ptr: usize ,num: usize) -> String {
 }
 
 #[allow(unused)]
+pub fn read_utf16_string (buf: &[u8],ptr: usize ,num: usize, endian: Endian) -> String {
+    let n = if(num % 2 != 0) { num -1 } else { num };
+    let mut s = Vec::new();
+    for i in 0..n {
+        if buf[ptr + i] == 0 && buf[ptr + i + 1] == 0 {break;}
+        s.push(buf[ptr + i]);
+    }
+    let res = match endian {
+        Endian::BigEndian => String::from_utf16(&read_bytes_as_u16_vec(&s,0,s.len()),),
+        Endian::LittleEndian => String::from_utf16(&read_bytes_as_u16_vec(&s,0,s.len()).iter().rev().map(|&x| x).collect::<Vec<u16>>(),),
+    };
+    match res {
+        Ok(strings) => {
+            return strings;
+        },
+        _ => {
+            return "".to_string();
+        }
+    }
+
+}
+
+#[allow(unused)]
 #[inline]
 pub fn read_bytes_as_vec (buf: &[u8],ptr: usize ,length: usize) -> Vec<u8> {
     let mut c = Vec::new();

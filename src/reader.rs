@@ -4,6 +4,7 @@
 use std::io::Read;
 use std::io::Cursor;
 use crate::Endian;
+use crate::endian;
 use std::io::Seek;
 use std::io::SeekFrom;
 use std::io::Error;
@@ -88,6 +89,7 @@ pub trait BinaryReader {
     /// If reader read until \0, but skip size byte.
 
     fn read_ascii_string(&mut self,size:usize) -> Result<String,Error>;
+    fn read_utf16_string(&mut self,size:usize) -> Result<String,Error>;
 
     fn read_utf8_string(&mut self,size:usize) -> Result<String,Error>;
 
@@ -600,7 +602,39 @@ impl BinaryReader for BytesReader {
     ///   return Ok(r)
     /// }
     /// ```
-    /// 
+    fn read_utf16_string(&mut self,size:usize) -> Result<String,Error> {
+        let endian = self.endian;
+        self.check_bound(size * 2)?;
+        let ptr = self.ptr;
+        self.ptr += size * 2;
+        let buf = &self.buffer;
+        let mut s = Vec::new();
+        for i in 0..size {
+            let array = [buf[ptr + i * 2] ,buf[ptr + i * 2 + 1]];
+            let c = match endian {
+                Endian::BigEndian => {
+                    u16::from_be_bytes(array)
+                },
+                Endian::LittleEndian => {
+                    u16::from_le_bytes(array)
+                }
+                
+            };
+            if c == 0 {break;}
+            s.push(c);
+        }
+        let res = String::from_utf16(&s);
+        match res {
+            Ok(strings) => {
+                return Ok(strings);
+            },
+            _ => {
+                let err = "This string can not read";
+                return Err(Error::new(ErrorKind::Other,err));
+            }
+        }
+    }
+    
     fn read_ascii_string(&mut self,size:usize) -> Result<String,Error>{
         self.check_bound(size)?;
         let ptr = self.ptr;
