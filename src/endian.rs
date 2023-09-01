@@ -1,4 +1,6 @@
 use std::fmt::Display;
+/// Endianess
+/// Big Endian or Little Endian
 
 #[derive(Copy,Debug,Clone,PartialEq)]
 pub enum Endian {
