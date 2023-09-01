@@ -301,6 +301,17 @@ pub fn read_bytes_as_vec (buf: &[u8],ptr: usize ,length: usize) -> Vec<u8> {
     c
 }
 
+#[allow(unused)]
+#[inline]
+pub fn read_bytes_as_u16_vec (buf :&[u8],ptr: usize ,length: usize) -> Vec<u16> {
+    let mut c = Vec::new();
+
+    for i in 0..length /2  {
+        c.push(buf[ptr + i * 2] as u16);
+        c.push(buf[ptr + i * 2 + 1] as u16);
+    }
+    c
+}
 
 #[allow(unused)]
 #[inline]

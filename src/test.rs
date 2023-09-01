@@ -464,3 +464,11 @@ use crate::Endian;
         Ok(())
         
     }
+
+    #[cfg(feature="util")]
+    fn io_test() {
+        use crate::io::*;
+        
+    }
+
+
