@@ -156,7 +156,7 @@ use crate::Endian;
     }
 
 
-    #[cfg(feature="stream")]
+    #[cfg(not(target_family = "wasm"))]
     #[test]
     fn check_stream () -> Result<(),Box<dyn std::error::Error>> {
         use crate::reader::StreamReader;
@@ -310,7 +310,42 @@ use crate::Endian;
         let r = reader.seek(SeekFrom::End(-1))?;
         assert_eq!(r, 254);
 
-    
+        let string = "Hello World!".to_string();
+        // utf16
+        let mut buffer = Vec::new();
+        for c in string.encode_utf16() {
+            buffer.push((c & 0xff) as u8);
+            buffer.push((c >> 8) as u8);
+        }   
+        let mut reader = StreamReader::new(Cursor::new(buffer));
+        reader.set_endian(Endian::LittleEndian);
+        let r = reader.read_utf16_string(12)?;
+        assert_eq!(r, "Hello World!");
+
+        let string = "へろー World!".to_string();
+        // utf16
+        let mut buffer = Vec::new();
+        for c in string.encode_utf16() {
+            buffer.push((c & 0xff) as u8);
+            buffer.push((c >> 8) as u8);
+        }   
+        let mut reader = StreamReader::new(Cursor::new(buffer));
+        reader.set_endian(Endian::BigEndian);
+        let r = reader.read_utf16_string(10)?;
+        assert_ne!(r, "へろー World!"); // read error 
+
+        let string = "へろー World!".to_string();
+        // utf16
+        let mut buffer = Vec::new();
+        for c in string.encode_utf16() {
+            buffer.push((c >> 8) as u8);
+            buffer.push((c & 0xff) as u8);
+        }   
+        let mut reader = StreamReader::new(Cursor::new(buffer));
+        reader.set_endian(Endian::BigEndian);
+        let r = reader.read_utf16_string(10)?;
+        assert_eq!(r, "へろー World!"); // ok
+
         Ok(())
         
     }

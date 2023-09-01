@@ -4,7 +4,6 @@
 use std::io::Read;
 use std::io::Cursor;
 use crate::Endian;
-use crate::endian;
 use std::io::Seek;
 use std::io::SeekFrom;
 use std::io::Error;
@@ -13,7 +12,7 @@ use std::io::ErrorKind;
 #[cfg(feature="codec")]
 use encoding_rs::*;
 
-#[cfg(feature="stream")]
+#[cfg(not(target_family = "wasm"))]
 use std::io::BufRead;
 
 #[cfg(feature="codec")]
@@ -89,7 +88,20 @@ pub trait BinaryReader {
     /// If reader read until \0, but skip size byte.
 
     fn read_ascii_string(&mut self,size:usize) -> Result<String,Error>;
+
+    /// read_utf16_string for utf16 string. use endien
+
     fn read_utf16_string(&mut self,size:usize) -> Result<String,Error>;
+
+    fn read_utf16be_string(&mut self,size:usize) -> Result<String,Error> {
+        self.set_endian(Endian::BigEndian);
+        self.read_utf16_string(size)
+    }
+
+    fn read_utf16le_string(&mut self,size:usize) -> Result<String,Error> {
+        self.set_endian(Endian::LittleEndian);
+        self.read_utf16_string(size)
+    }
 
     fn read_utf8_string(&mut self,size:usize) -> Result<String,Error>;
 
@@ -103,7 +115,7 @@ pub trait BinaryReader {
     fn seek(&mut self,seek: SeekFrom) -> Result<u64,Error>;
 }
 
-/// BytesReader from creating Slice &\[u8\] or Vec<u8>,
+/// BytesReader from creating Slice `&[u8]` or `Vec<u8>`,
 /// no use Read trait
 #[derive(Debug,Clone)]
 pub struct BytesReader {
@@ -112,8 +124,8 @@ pub struct BytesReader {
     endian: Endian,
 }
 
-#[cfg(feature="stream")]
-/// using StreamReader feature stream only
+#[cfg(not(target_family = "wasm"))]
+/// 0.0.8 Enable support for target_family other than "wasm", feature "stream" is disabled.
 ///
 /// StreamReader from creating BufRead
 /// use BufRead trait
@@ -152,7 +164,7 @@ impl BytesReader {
 }
 
 
-#[cfg(feature="stream")]
+#[cfg(not(target_family = "wasm"))]
 impl<R:BufRead + Seek> StreamReader<R> {
     pub fn new(reader: R) -> StreamReader<R> {
         StreamReader {
@@ -165,7 +177,7 @@ impl<R:BufRead + Seek> StreamReader<R> {
 
 
 
-#[cfg(feature="stream")]
+#[cfg(not(target_family = "wasm"))]
 impl<R> From<R> for StreamReader<Cursor<R>> 
     where R: Read {
 
@@ -732,7 +744,7 @@ impl BinaryReader for BytesReader {
 }
 
 
-#[cfg(feature="stream")]
+#[cfg(not(target_family = "wasm"))]
 impl<R:BufRead+Seek> BinaryReader for StreamReader<R> {
 
     fn set_endian(&mut self, endian: Endian) {
@@ -1094,5 +1106,37 @@ impl<R:BufRead+Seek> BinaryReader for StreamReader<R> {
 
     fn seek(&mut self, seek: std::io::SeekFrom) -> std::result::Result<u64, Error> {
         self.reader.seek(seek)
+    }
+
+    fn read_utf16_string(&mut self,size:usize) -> Result<String,Error> {
+        let endian = self.endian;
+        let mut array :Vec<u8> = (0..size * 2).map(|_| 0).collect();
+        self.reader.read_exact(&mut array)?;
+        let buf = &array;
+        let mut s = Vec::new();
+        for i in 0..size {
+            let array = [buf[i * 2] ,buf[i * 2 + 1]];
+            let c = match endian {
+                Endian::BigEndian => {
+                    u16::from_be_bytes(array)
+                },
+                Endian::LittleEndian => {
+                    u16::from_le_bytes(array)
+                }
+                
+            };
+            if c == 0 {break;}
+            s.push(c);
+        }
+        let res = String::from_utf16(&s);
+        match res {
+            Ok(strings) => {
+                return Ok(strings);
+            },
+            _ => {
+                let err = "This string can not read";
+                return Err(Error::new(ErrorKind::Other,err));
+            }
+        }
     }
 }
