@@ -1,5 +1,6 @@
 //! A reader default uses system endianness
 //! If you will use another endianness,use set_endian.
+//! 0.0.9 enable Stream Reader is default but not enable wasm
 
 use std::io::Read;
 use std::io::Cursor;

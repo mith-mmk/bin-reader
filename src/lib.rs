@@ -1,4 +1,5 @@
 //! Crate bin_rs is a binary manipulate crate.
+//!
 
 pub mod reader;
 #[cfg(feature="async")]

@@ -3,6 +3,9 @@
 //! Therefor it needs direct access functions.
 //! 
 //! use feature="util"
+//! 
+//! 0.0.9 utf16 string read/write
+
 
 use crate::Endian;
 

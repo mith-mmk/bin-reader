@@ -467,7 +467,7 @@ use crate::Endian;
 
     #[cfg(feature="util")]
     fn io_test() {
-        use crate::io::*;
+        // !todo
         
     }
 
