@@ -6,7 +6,7 @@ use crate::Endian;
 #[test]
     fn check_works() -> Result<(),Box<dyn std::error::Error>>{
         let buffer : Vec<u8> = (0..255).map(|i| i).collect();
-        let mut reader = BytesReader::from_vec(buffer);
+        let mut reader = BytesReader::from(buffer);
 
         let endian =
             if cfg!(tarread_endian = "big") {
@@ -46,7 +46,7 @@ use crate::Endian;
         assert_eq!(r , 0x40);
 
         let buffer : Vec<u8> = (0..32).map(|i| 255-i).collect();
-        let mut reader = BytesReader::from_vec(buffer);
+        let mut reader = BytesReader::from(buffer);
         let r = reader.read_i8()?;  // 0xff
         assert_eq!(r , -1);
         let r = reader.read_i16_be()?; // 0xfefd -> fefd
@@ -67,7 +67,7 @@ use crate::Endian;
         }
 
         let buffer : Vec<u8> = (0..16).map(|i| 255-i).collect();
-        let mut reader = BytesReader::from_vec(buffer);
+        let mut reader = BytesReader::from(buffer);
         let r = reader.read_i64_be()?;
         assert_eq!(r , -283686952306184);
 

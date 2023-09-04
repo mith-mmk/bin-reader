@@ -2,6 +2,7 @@
 //! If you will use another endianness,use set_endian.
 //! 0.0.9 enable Stream Reader is default but not enable wasm
 
+
 use std::io::Read;
 use std::io::Cursor;
 use crate::Endian;
@@ -37,8 +38,16 @@ pub trait BinaryReader {
     
     fn read_byte(&mut self) -> Result<u8,Error>;
     fn read_u8(&mut self) -> Result<u8,Error>;
-    fn read_bytes(&mut self,array: &mut [u8]) -> Result<(),Error>;
-//    fn read_bytes(&mut self,len: usize) -> Result<&[u8],Error>;
+    
+
+    #[deprecated(since = "0.0.10", note = "Use new function `read_exact()` instead")]
+    fn read_bytes(&mut self,array: &mut [u8]) -> Result<(),Error> {
+        self.read_exact(array)
+    }
+
+    fn read_exact(&mut self,array: &mut [u8]) -> Result<(),Error>;
+
+    //    fn read_bytes(&mut self,len: usize) -> Result<&[u8],Error>;
     fn read_bytes_as_vec(&mut self,len: usize) -> Result<Vec<u8>,Error>;
 
     /// read_bytes_no_move does not move offset after read_bytes.
@@ -95,13 +104,19 @@ pub trait BinaryReader {
     fn read_utf16_string(&mut self,size:usize) -> Result<String,Error>;
 
     fn read_utf16be_string(&mut self,size:usize) -> Result<String,Error> {
+        let endian = self.endian();
         self.set_endian(Endian::BigEndian);
-        self.read_utf16_string(size)
+        let result = self.read_utf16_string(size);
+        self.set_endian(endian);
+        result
     }
 
     fn read_utf16le_string(&mut self,size:usize) -> Result<String,Error> {
+        let endian = self.endian();
         self.set_endian(Endian::LittleEndian);
-        self.read_utf16_string(size)
+        let result = self.read_utf16_string(size);
+        self.set_endian(endian);
+        result
     }
 
     fn read_utf8_string(&mut self,size:usize) -> Result<String,Error>;
@@ -145,12 +160,9 @@ impl BytesReader {
         } 
     }
 
+    #[deprecated(since = "0.0.10", note = "Use new function `from(Vec<u8>)` instead")]
     pub fn from_vec(buffer:Vec<u8>) -> Self { 
-        Self{
-            buffer: buffer,
-            ptr: 0,
-            endian: crate::system_endian(),
-        } 
+        Self::from(buffer)
     }
 
     fn check_bound(&mut self,size:usize) -> Result<(),Error> {
@@ -164,6 +176,30 @@ impl BytesReader {
 
 }
 
+impl From <Vec<u8>> for BytesReader {
+    fn from(buffer: Vec<u8>) -> Self {
+        Self{
+            buffer: buffer,
+            ptr: 0,
+            endian: crate::system_endian(),
+        } 
+    }
+}   
+
+
+impl From <&[u8]> for BytesReader {
+    fn from(buffer: &[u8]) -> Self {
+        Self{
+            buffer: buffer.to_vec(),
+            ptr: 0,
+            endian: crate::system_endian(),
+        } 
+    }
+}
+
+
+
+
 
 #[cfg(not(target_family = "wasm"))]
 impl<R:BufRead + Seek> StreamReader<R> {
@@ -174,8 +210,6 @@ impl<R:BufRead + Seek> StreamReader<R> {
         }
     }
 }
-
-
 
 
 #[cfg(not(target_family = "wasm"))]
@@ -191,7 +225,6 @@ impl<R> From<R> for StreamReader<Cursor<R>>
 
     }
 }
-
 
 impl BinaryReader for BytesReader {
     fn offset(&mut self) -> Result<u64,Error> {
@@ -221,7 +254,7 @@ impl BinaryReader for BytesReader {
         Ok(self.read_byte()? as i8)
     }
 
-    fn read_bytes(&mut self,array: &mut [u8]) -> Result<(),Error> {
+    fn read_exact(&mut self,array: &mut [u8]) -> Result<(),Error> {
         let len = array.len();
         self.check_bound(len)?;
         for i in 0..len {
@@ -616,27 +649,13 @@ impl BinaryReader for BytesReader {
     /// }
     /// ```
     fn read_utf16_string(&mut self,size:usize) -> Result<String,Error> {
-        let endian = self.endian;
         self.check_bound(size * 2)?;
-        let ptr = self.ptr;
-        self.ptr += size * 2;
-        let buf = &self.buffer;
-        let mut s = Vec::new();
-        for i in 0..size {
-            let array = [buf[ptr + i * 2] ,buf[ptr + i * 2 + 1]];
-            let c = match endian {
-                Endian::BigEndian => {
-                    u16::from_be_bytes(array)
-                },
-                Endian::LittleEndian => {
-                    u16::from_le_bytes(array)
-                }
-                
-            };
-            if c == 0 {break;}
-            s.push(c);
+        let mut utf16s = Vec::new();
+        for _ in 0..size {
+            let utf16 = self.read_u16().unwrap();
+            utf16s.push(utf16);
         }
-        let res = String::from_utf16(&s);
+        let res = String::from_utf16(&utf16s);
         match res {
             Ok(strings) => {
                 return Ok(strings);
@@ -769,7 +788,7 @@ impl<R:BufRead+Seek> BinaryReader for StreamReader<R> {
         Ok(self.read_byte()? as i8)
     }
 
-    fn read_bytes(&mut self, array: &mut [u8]) -> std::result::Result<(), Error> {
+    fn read_exact(&mut self, array: &mut [u8]) -> std::result::Result<(), Error> {
         self.reader.read_exact(array)?;
         Ok(())
     }
@@ -1110,26 +1129,12 @@ impl<R:BufRead+Seek> BinaryReader for StreamReader<R> {
     }
 
     fn read_utf16_string(&mut self,size:usize) -> Result<String,Error> {
-        let endian = self.endian;
-        let mut array :Vec<u8> = (0..size * 2).map(|_| 0).collect();
-        self.reader.read_exact(&mut array)?;
-        let buf = &array;
-        let mut s = Vec::new();
-        for i in 0..size {
-            let array = [buf[i * 2] ,buf[i * 2 + 1]];
-            let c = match endian {
-                Endian::BigEndian => {
-                    u16::from_be_bytes(array)
-                },
-                Endian::LittleEndian => {
-                    u16::from_le_bytes(array)
-                }
-                
-            };
-            if c == 0 {break;}
-            s.push(c);
+        let mut utf16s = Vec::new();
+        for _ in 0..size {
+            let utf16 = self.read_u16().unwrap();
+            utf16s.push(utf16);
         }
-        let res = String::from_utf16(&s);
+        let res = String::from_utf16(&utf16s);
         match res {
             Ok(strings) => {
                 return Ok(strings);
