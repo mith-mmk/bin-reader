@@ -675,9 +675,9 @@ impl BinaryReader for BytesReader {
         let mut s = Vec::new();
         for i in 0..size {
             if buf[ptr + i] == 0 {break;}
-            s.push(buf[ptr + i]);
+            s.push(buf[ptr + i] as u16);
         }
-        let res = String::from_utf8(s);
+        let res = String::from_utf16(&s);
         match res {
             Ok(strings) => {
                 return Ok(strings);
@@ -1054,9 +1054,9 @@ impl<R:BufRead+Seek> BinaryReader for StreamReader<R> {
         let mut s = Vec::new();
         for i in 0..size {
             if buf[i] == 0 {break;}
-            s.push(buf[i]);
+            s.push(buf[i] as u16);
         }
-        let res = String::from_utf8(s);
+        let res = String::from_utf16(&s);
         match res {
             Ok(strings) => {
                 return Ok(strings);
