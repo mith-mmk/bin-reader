@@ -11,7 +11,7 @@ use std::io::ErrorKind;
 /// use BufRead trait
 use std::io::Read;
 use std::io::Seek;
-use std::io::SeekFrom;
+
 use std::path::PathBuf;
 
 use super::BinaryReader;
@@ -37,7 +37,7 @@ impl StreamReader<BufReader<File>> {
 impl<R: BufRead + Seek> StreamReader<R> {
     pub fn new(reader: R) -> StreamReader<R> {
         StreamReader {
-            reader: reader,
+            reader,
             endian: crate::system_endian(),
         }
     }
@@ -321,11 +321,11 @@ impl<R: BufRead + Seek> BinaryReader for StreamReader<R> {
         let res = String::from_utf16(&s);
         match res {
             Ok(strings) => {
-                return Ok(strings);
+                Ok(strings)
             }
             _ => {
                 let err = "This string can not read";
-                return Err(Error::new(ErrorKind::Other, err));
+                Err(Error::new(ErrorKind::Other, err))
             }
         }
     }
@@ -342,11 +342,11 @@ impl<R: BufRead + Seek> BinaryReader for StreamReader<R> {
         let res = String::from_utf8(s);
         match res {
             Ok(strings) => {
-                return Ok(strings);
+                Ok(strings)
             }
             _ => {
                 let err = "This string can not read";
-                return Err(Error::new(ErrorKind::Other, err));
+                Err(Error::new(ErrorKind::Other, err))
             }
         }
     }
@@ -384,7 +384,7 @@ impl<R: BufRead + Seek> BinaryReader for StreamReader<R> {
     }
 
     fn offset(&mut self) -> std::result::Result<u64, Error> {
-        self.reader.seek(SeekFrom::Current(0))
+        self.reader.stream_position()
     }
 
     fn seek(&mut self, seek: std::io::SeekFrom) -> std::result::Result<u64, Error> {
@@ -400,11 +400,11 @@ impl<R: BufRead + Seek> BinaryReader for StreamReader<R> {
         let res = String::from_utf16(&utf16s);
         match res {
             Ok(strings) => {
-                return Ok(strings);
+                Ok(strings)
             }
             _ => {
                 let err = "This string can not read";
-                return Err(Error::new(ErrorKind::Other, err));
+                Err(Error::new(ErrorKind::Other, err))
             }
         }
     }

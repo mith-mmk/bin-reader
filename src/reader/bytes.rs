@@ -44,7 +44,7 @@ impl BytesReader {
 impl From<Vec<u8>> for BytesReader {
     fn from(buffer: Vec<u8>) -> Self {
         Self {
-            buffer: buffer,
+            buffer,
             ptr: 0,
             endian: crate::system_endian(),
         }
@@ -85,7 +85,7 @@ impl From<bytes::Bytes> for BytesReader {
 
 impl BinaryReader for BytesReader {
     fn offset(&mut self) -> Result<u64, Error> {
-        return Ok(self.ptr as u64);
+        Ok(self.ptr as u64)
     }
 
     fn set_endian(&mut self, endian: Endian) {
@@ -575,11 +575,11 @@ impl BinaryReader for BytesReader {
         let res = String::from_utf16(&utf16s);
         match res {
             Ok(strings) => {
-                return Ok(strings);
+                Ok(strings)
             }
             _ => {
                 let err = "This string can not read";
-                return Err(Error::new(ErrorKind::Other, err));
+                Err(Error::new(ErrorKind::Other, err))
             }
         }
     }
@@ -599,11 +599,11 @@ impl BinaryReader for BytesReader {
         let res = String::from_utf16(&s);
         match res {
             Ok(strings) => {
-                return Ok(strings);
+                Ok(strings)
             }
             _ => {
                 let err = "This string can not read";
-                return Err(Error::new(ErrorKind::Other, err));
+                Err(Error::new(ErrorKind::Other, err))
             }
         }
     }
@@ -621,11 +621,11 @@ impl BinaryReader for BytesReader {
         let res = String::from_utf8(s);
         match res {
             Ok(strings) => {
-                return Ok(strings);
+                Ok(strings)
             }
             _ => {
                 let err = "This string can not read";
-                return Err(Error::new(ErrorKind::Other, err));
+                Err(Error::new(ErrorKind::Other, err))
             }
         }
     }

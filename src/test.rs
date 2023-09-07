@@ -5,7 +5,7 @@ use std::io::SeekFrom;
 
 #[test]
 fn check_works() -> Result<(), Box<dyn std::error::Error>> {
-    let buffer: Vec<u8> = (0..255).map(|i| i).collect();
+    let buffer: Vec<u8> = (0..255).collect();
     let mut reader = BytesReader::from(buffer);
 
     let endian = if cfg!(tarread_endian = "big") {
@@ -143,7 +143,7 @@ fn check_works() -> Result<(), Box<dyn std::error::Error>> {
     let r = reader.read_utf16_string(8)?;
     assert_eq!(r, "11234567");
 
-    let buffer: Vec<u8> = (0..255).map(|i| i).collect();
+    let buffer: Vec<u8> = (0..255).collect();
     let mut reader = BytesReader::new(&buffer);
     reader.set_endian(Endian::BigEndian);
     let r = reader.read_u16()?;
@@ -164,7 +164,7 @@ fn check_works() -> Result<(), Box<dyn std::error::Error>> {
 fn check_stream() -> Result<(), Box<dyn std::error::Error>> {
     use crate::reader::StreamReader;
 
-    let buffer: Vec<u8> = (0..255).map(|i| i).collect();
+    let buffer: Vec<u8> = (0..255).collect();
     let f = Cursor::new(&*buffer);
     let mut reader = StreamReader::new(f);
 
@@ -296,7 +296,7 @@ fn check_stream() -> Result<(), Box<dyn std::error::Error>> {
     let r = reader.read_f64()?;
     assert_eq!(r, -17.19);
 
-    let buffer: Vec<u8> = (0..255).map(|i| i).collect();
+    let buffer: Vec<u8> = (0..255).collect();
     let f = Cursor::new(&*buffer);
     let mut reader = StreamReader::new(f);
 
