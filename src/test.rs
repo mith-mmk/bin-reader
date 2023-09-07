@@ -172,7 +172,7 @@ fn check_works() -> Result<(), Box<dyn std::error::Error>> {
 fn check_stream() -> Result<(), Box<dyn std::error::Error>> {
   use std::path::PathBuf;
 
-use crate::reader::StreamReader;
+  use crate::reader::StreamReader;
 
   let buffer: Vec<u8> = (0..255).collect();
   let f = Cursor::new(&*buffer);
@@ -364,7 +364,6 @@ use crate::reader::StreamReader;
   let assert_str = "©2023 Mith@mmk";
   let r = reader.read_ascii_string(assert_str.len() - 1)?; // un ascii string using 2byte for utf8
   assert_eq!(r, assert_str);
-
 
   Ok(())
 }

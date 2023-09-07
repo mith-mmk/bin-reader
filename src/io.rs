@@ -256,7 +256,11 @@ pub fn read_i128_le(buf: &[u8], ptr: usize) -> i128 {
 }
 
 pub fn read_ascii_string(buf: &[u8], ptr: usize, num: usize) -> String {
-  read_string(buf, ptr, num)
+  let mut u16s = Vec::new();
+  for b in buf {
+    u16s.push(*b as u16);
+  }
+  return String::from_utf16_lossy(&u16s);
 }
 
 #[allow(unused)]
@@ -282,32 +286,16 @@ pub fn read_string(buf: &[u8], ptr: usize, num: usize) -> String {
 
 #[allow(unused)]
 pub fn read_utf16_string(buf: &[u8], ptr: usize, num: usize, endian: Endian) -> String {
-  let n = if (num % 2 != 0) { num - 1 } else { num };
   let mut s = Vec::new();
-  for i in 0..n {
-    if buf[ptr + i] == 0 && buf[ptr + i + 1] == 0 {
+  let len = buf.len() / 2;
+  for i in 0..len {
+    if buf[ptr + i * 2] == 0 && buf[ptr + i * 2 + 1] == 0 {
       break;
     }
-    s.push(buf[ptr + i]);
+    let u16 = read_u16(buf, ptr + i * 2, endian);
+    s.push(u16);
   }
-  let res = match endian {
-    Endian::BigEndian => String::from_utf16(&read_bytes_as_u16_vec(&s, 0, s.len())),
-    Endian::LittleEndian => String::from_utf16(
-      &read_bytes_as_u16_vec(&s, 0, s.len())
-        .iter()
-        .rev()
-        .map(|&x| x)
-        .collect::<Vec<u16>>(),
-    ),
-  };
-  match res {
-    Ok(strings) => {
-      return strings;
-    }
-    _ => {
-      return "".to_string();
-    }
-  }
+  String::from_utf16_lossy(&s)
 }
 
 #[allow(unused)]

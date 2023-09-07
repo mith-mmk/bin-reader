@@ -1,5 +1,5 @@
 use crate::Endian;
-use std::io::{Error, SeekFrom, ErrorKind};
+use std::io::{Error, ErrorKind, SeekFrom};
 
 /// 0.0.11 Some functions have been changed to be written in this trait.
 pub trait BinaryReader {
@@ -102,7 +102,6 @@ pub trait BinaryReader {
   /// 0.0.11
   /// read_utf16_string for utf16 string. use endien
   /// "size" refers to the number of bytes.
-
   fn read_utf16_string(&mut self, size: usize) -> Result<String, Error> {
     let size = size / 2;
     let mut array: Vec<u16> = vec![0; size];

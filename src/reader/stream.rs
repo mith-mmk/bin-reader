@@ -306,7 +306,6 @@ impl<R: BufRead + Seek> BinaryReader for StreamReader<R> {
     Ok(f64::from_le_bytes(array))
   }
 
-
   #[cfg(feature = "codec")]
   fn read_local_string(&mut self, size: usize, code: CodeType) -> Result<String, Error> {
     let mut array: Vec<u8> = (0..size).map(|_| 0).collect();
@@ -346,5 +345,4 @@ impl<R: BufRead + Seek> BinaryReader for StreamReader<R> {
   fn seek(&mut self, seek: std::io::SeekFrom) -> std::result::Result<u64, Error> {
     self.reader.seek(seek)
   }
-
 }
