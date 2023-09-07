@@ -1,19 +1,18 @@
 //! A reader default uses system endianness
 //! If you will use another endianness,use set_endian.
-//! 0.0.9 enable Stream Reader is default but not enable wasm
-
+//! 0.0.10 StreamReader enable for wasm32
 
 mod binary;
 mod bytes;
 mod stream;
-pub use binary::BinaryReader as BinaryReader;
-pub use bytes::BytesReader as BytesReader;
-pub use stream::StreamReader as StreamReader;
+pub use self::binary::BinaryReader;
+pub use self::bytes::BytesReader;
+pub use self::stream::StreamReader;
 
-#[cfg(feature="codec")]
+#[cfg(feature = "codec")]
 use encoding_rs::*;
 
-#[cfg(feature="codec")]
+#[cfg(feature = "codec")]
 pub enum CodeType {
     Ascii,
     Big5,
