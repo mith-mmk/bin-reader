@@ -255,7 +255,7 @@ pub fn read_i128_le(buf: &[u8], ptr: usize) -> i128 {
   (((b1 as u128) << 64) | b0 as u128) as i128
 }
 
-pub fn read_ascii_string(buf: &[u8], ptr: usize, num: usize) -> String {
+pub fn read_ascii_string(buf: &[u8], _ptr: usize, _num: usize) -> String {
   let mut u16s = Vec::new();
   for b in buf {
     u16s.push(*b as u16);
