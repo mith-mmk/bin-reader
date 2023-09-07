@@ -1,5 +1,7 @@
 use crate::Endian;
-use std::io::{Error, SeekFrom};
+use std::io::{Error, SeekFrom, ErrorKind};
+
+/// 0.0.11 Some functions have been changed to be written in this trait.
 pub trait BinaryReader {
   fn set_endian(&mut self, endian: Endian);
   fn endian(&self) -> Endian;
@@ -62,13 +64,60 @@ pub trait BinaryReader {
   fn read_f64_le(&mut self) -> Result<f64, Error>;
 
   /// read_ascii_string for C like ascii string.This function finishes find end marker 0x00.
-  /// If reader read until \0, but skip size byte.
+  /// ```
+  /// use bin_rs::reader::*;
+  /// use std::io::Error;
+  ///
+  /// fn test() -> Result<String,Error> {
+  ///   let buffer = b"Hello World!\01234";
+  ///   let mut reader = BytesReader::new(buffer);
+  ///   let r = reader.read_ascii_string("Hello World!\01234".len())?;  // after \0 is trim
+  ///   //assert_eq!(r ,"Hello World!");
+  ///   return Ok(r)
+  /// }
+  /// ```
 
-  fn read_ascii_string(&mut self, size: usize) -> Result<String, Error>;
+  fn read_ascii_string(&mut self, size: usize) -> Result<String, Error> {
+    let mut array: Vec<u8> = vec![0; size];
+    self.read_exact(&mut array)?;
 
+    let buf = &array;
+    let mut s = Vec::new();
+    for b in buf {
+      if *b == 0 {
+        break;
+      }
+      s.push(*b as u16);
+    }
+    let res = String::from_utf16(&s);
+    match res {
+      Ok(strings) => Ok(strings),
+      _ => {
+        let err = "This string can not read";
+        Err(Error::new(ErrorKind::Other, err))
+      }
+    }
+  }
+
+  /// 0.0.11
   /// read_utf16_string for utf16 string. use endien
+  /// "size" refers to the number of bytes.
 
-  fn read_utf16_string(&mut self, size: usize) -> Result<String, Error>;
+  fn read_utf16_string(&mut self, size: usize) -> Result<String, Error> {
+    let size = size / 2;
+    let mut array: Vec<u16> = vec![0; size];
+    for i in 0..size {
+      array[i] = self.read_u16()?;
+    }
+    let res = String::from_utf16(&array);
+    match res {
+      Ok(strings) => Ok(strings),
+      _ => {
+        let err = "This string can not read";
+        Err(Error::new(ErrorKind::Other, err))
+      }
+    }
+  }
 
   fn read_utf16be_string(&mut self, size: usize) -> Result<String, Error> {
     let endian = self.endian();
@@ -86,7 +135,20 @@ pub trait BinaryReader {
     result
   }
 
-  fn read_utf8_string(&mut self, size: usize) -> Result<String, Error>;
+  fn read_utf8_string(&mut self, size: usize) -> Result<String, Error> {
+    let mut array: Vec<u8> = vec![0; size];
+    for i in 0..size {
+      array[i] = self.read_u8()?;
+    }
+    let res = String::from_utf8(array);
+    match res {
+      Ok(strings) => Ok(strings),
+      _ => {
+        let err = "This string can not read";
+        Err(Error::new(ErrorKind::Other, err))
+      }
+    }
+  }
 
   #[cfg(feature = "codec")]
   fn read_local_string(&mut self, size: usize, code: CodeType) -> Result<String, Error>;

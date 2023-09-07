@@ -1,5 +1,6 @@
 use crate::reader::*;
 use crate::Endian;
+use std::fs;
 use std::io::Cursor;
 use std::io::SeekFrom;
 
@@ -126,12 +127,13 @@ fn check_works() -> Result<(), Box<dyn std::error::Error>> {
   let r = reader.read_f64()?;
   assert_eq!(r, -17.19);
 
+  // change number of chartors -> number of bytes
   let buffer: [u8; 16] = [
     0x00, 0x31, 0x00, 0x31, 0x00, 0x32, 0x00, 0x33, 0x00, 0x34, 0x00, 0x35, 0x00, 0x36, 0x00, 0x37,
   ];
   let mut reader = BytesReader::new(&buffer);
   reader.set_endian(Endian::BigEndian);
-  let r = reader.read_utf16_string(8)?;
+  let r = reader.read_utf16_string(16)?;
   assert_eq!(r, "11234567");
 
   let buffer: [u8; 16] = [
@@ -139,7 +141,7 @@ fn check_works() -> Result<(), Box<dyn std::error::Error>> {
   ];
   let mut reader = BytesReader::new(&buffer);
   reader.set_endian(Endian::LittleEndian);
-  let r = reader.read_utf16_string(8)?;
+  let r = reader.read_utf16_string(16)?;
   assert_eq!(r, "11234567");
 
   let buffer: Vec<u8> = (0..255).collect();
@@ -155,13 +157,22 @@ fn check_works() -> Result<(), Box<dyn std::error::Error>> {
   assert_eq!(r, 4);
   let r = reader.seek(SeekFrom::End(-1))?;
   assert_eq!(r, 254);
+
+  let f = std::path::PathBuf::from("./test/unascii.txt");
+  let buffer = fs::read(f)?;
+  let mut reader = BytesReader::new(&buffer);
+  let assert_str = "©2023 Mith@mmk";
+  let r = reader.read_ascii_string(assert_str.len() - 1)?; // un ascii string using 2byte for utf8
+  assert_eq!(r, assert_str);
+
   Ok(())
 }
 
-#[cfg(not(target_family = "wasm"))]
 #[test]
 fn check_stream() -> Result<(), Box<dyn std::error::Error>> {
-  use crate::reader::StreamReader;
+  use std::path::PathBuf;
+
+use crate::reader::StreamReader;
 
   let buffer: Vec<u8> = (0..255).collect();
   let f = Cursor::new(&*buffer);
@@ -277,10 +288,6 @@ fn check_stream() -> Result<(), Box<dyn std::error::Error>> {
   let r = reader.read_utf8_string(23)?;
   assert_eq!(r, "へろーわーるど\01");
 
-  if cfg!(feature = "codec") {
-    // no impl reader.read_local_string
-  }
-
   let buffer = [0x71, 0x3D, 0x0A, 0xD7, 0xA3, 0x30, 0x31, 0xC0].to_vec();
   let f = Cursor::new(&*buffer);
   let mut reader = StreamReader::new(f);
@@ -320,9 +327,10 @@ fn check_stream() -> Result<(), Box<dyn std::error::Error>> {
     buffer.push((c & 0xff) as u8);
     buffer.push((c >> 8) as u8);
   }
+  let len = buffer.len();
   let mut reader = StreamReader::new(Cursor::new(buffer));
   reader.set_endian(Endian::LittleEndian);
-  let r = reader.read_utf16_string(12)?;
+  let r = reader.read_utf16_string(len)?;
   assert_eq!(r, "Hello World!");
 
   let string = "へろー World!".to_string();
@@ -332,9 +340,10 @@ fn check_stream() -> Result<(), Box<dyn std::error::Error>> {
     buffer.push((c & 0xff) as u8);
     buffer.push((c >> 8) as u8);
   }
+  let len = buffer.len();
   let mut reader = StreamReader::new(Cursor::new(buffer));
   reader.set_endian(Endian::BigEndian);
-  let r = reader.read_utf16_string(10)?;
+  let r = reader.read_utf16_string(len)?;
   assert_ne!(r, "へろー World!"); // read error
 
   let string = "へろー World!".to_string();
@@ -344,10 +353,18 @@ fn check_stream() -> Result<(), Box<dyn std::error::Error>> {
     buffer.push((c >> 8) as u8);
     buffer.push((c & 0xff) as u8);
   }
+  let len = buffer.len();
   let mut reader = StreamReader::new(Cursor::new(buffer));
   reader.set_endian(Endian::BigEndian);
-  let r = reader.read_utf16_string(10)?;
+  let r = reader.read_utf16_string(len)?;
   assert_eq!(r, "へろー World!"); // ok
+
+  let f = PathBuf::from("./test/unascii.txt");
+  let mut reader = StreamReader::from_file(f)?;
+  let assert_str = "©2023 Mith@mmk";
+  let r = reader.read_ascii_string(assert_str.len() - 1)?; // un ascii string using 2byte for utf8
+  assert_eq!(r, assert_str);
+
 
   Ok(())
 }

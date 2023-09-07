@@ -24,7 +24,7 @@ pub struct StreamReader<R> {
 
 impl StreamReader<BufReader<File>> {
   #[cfg(not(target_family = "wasm"))]
-  fn from_file(filename: PathBuf) -> Result<Self, Error> {
+  pub fn from_file(filename: PathBuf) -> Result<Self, Error> {
     let file = File::open(filename)?;
     let reader = BufReader::new(file);
     Ok(Self {
@@ -306,46 +306,6 @@ impl<R: BufRead + Seek> BinaryReader for StreamReader<R> {
     Ok(f64::from_le_bytes(array))
   }
 
-  fn read_ascii_string(&mut self, size: usize) -> Result<String, Error> {
-    let mut array: Vec<u8> = (0..size).map(|_| 0).collect();
-    self.reader.read_exact(&mut array)?;
-
-    let buf = &array;
-    let mut s = Vec::new();
-    for i in 0..size {
-      if buf[i] == 0 {
-        break;
-      }
-      s.push(buf[i] as u16);
-    }
-    let res = String::from_utf16(&s);
-    match res {
-      Ok(strings) => Ok(strings),
-      _ => {
-        let err = "This string can not read";
-        Err(Error::new(ErrorKind::Other, err))
-      }
-    }
-  }
-
-  fn read_utf8_string(&mut self, size: usize) -> Result<String, Error> {
-    let mut array: Vec<u8> = (0..size).map(|_| 0).collect();
-    self.reader.read_exact(&mut array)?;
-
-    let buf = &array;
-    let mut s = Vec::new();
-    for i in 0..size {
-      s.push(buf[i]);
-    }
-    let res = String::from_utf8(s);
-    match res {
-      Ok(strings) => Ok(strings),
-      _ => {
-        let err = "This string can not read";
-        Err(Error::new(ErrorKind::Other, err))
-      }
-    }
-  }
 
   #[cfg(feature = "codec")]
   fn read_local_string(&mut self, size: usize, code: CodeType) -> Result<String, Error> {
@@ -387,19 +347,4 @@ impl<R: BufRead + Seek> BinaryReader for StreamReader<R> {
     self.reader.seek(seek)
   }
 
-  fn read_utf16_string(&mut self, size: usize) -> Result<String, Error> {
-    let mut utf16s = Vec::new();
-    for _ in 0..size {
-      let utf16 = self.read_u16().unwrap();
-      utf16s.push(utf16);
-    }
-    let res = String::from_utf16(&utf16s);
-    match res {
-      Ok(strings) => Ok(strings),
-      _ => {
-        let err = "This string can not read";
-        Err(Error::new(ErrorKind::Other, err))
-      }
-    }
-  }
 }

@@ -1,5 +1,6 @@
 //! async_reader is a test feature.
-//! 0.0.9 yet not stable
+//! This async is dipoable.
+//! now refactoring 
 
 use tokio::io::AsyncReadExt;
 use tokio::io::AsyncBufReadExt;
