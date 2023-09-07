@@ -486,5 +486,5 @@ pub async fn check_async() -> Result<(), Box<dyn std::error::Error>> {
 
 #[cfg(feature = "util")]
 fn io_test() {
-  !todo();
+  todo!();
 }
