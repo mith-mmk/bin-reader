@@ -14,14 +14,14 @@ use encoding_rs::*;
 
 #[cfg(feature = "codec")]
 pub enum CodeType {
-    Ascii,
-    Big5,
-    EucJp,
-    EucKr,
-    Gb18030,
-    Jis,
-    ShiftJis,
-    Utf16Be,
-    Utf16le,
-    Utf8,
+  Ascii,
+  Big5,
+  EucJp,
+  EucKr,
+  Gb18030,
+  Jis,
+  ShiftJis,
+  Utf16Be,
+  Utf16le,
+  Utf8,
 }
